@@ -1,0 +1,7 @@
+*.m~
+*.swp
+*.pdf
+/old/*
+/Tests/*
+/Personal/*
+/Documentation/*
