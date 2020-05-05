@@ -77,8 +77,15 @@ classdef EqualityMPC < ssMPC
         
         % Construct MPC
         self@ssMPC(model, nx, nu, ny, H, q, A, b, C, d, LB, UB, par.Results.solver,...
-            par.Results.Q, par.Results.R, [], N, N, x0, xr, ur);
+            par.Results.Q, par.Results.R, N, N, x0, xr, ur);
+        self = self.ref_update;
+        self = self.x0_update;
+        self.startup_MPC = false;
         
+    end
+    
+    function u = extract_control(self, z)
+            u = z(self.n+(1:self.m));
     end
     
     end
@@ -114,7 +121,7 @@ classdef EqualityMPC < ssMPC
         end
         
         function [Az, b] = compute_eq(model, N)
-            if isobject(model)
+            if isobject(model) && ~isa(model, 'ssModel')
                     N = model.N;
                 model = model.model;
             end
@@ -138,7 +145,7 @@ classdef EqualityMPC < ssMPC
         end
        
         function [C, d, LB, UB] = compute_ineq(model, N)
-            if isobject(model)
+            if isobject(model) && ~isa(model, 'ssModel')
                 N = model.N;
                 model = model.model;
             end

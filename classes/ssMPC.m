@@ -17,7 +17,6 @@ classdef (Abstract) ssMPC < QP
         model % Matrices and vectors of the system model. It must be a state space model
         Q % Cost for the system states
         R % Cost for the system inputs
-        P % Terminal cost
         Nc % Control horizon
         Np % Prediction horizon
         x0 % Current value of system state (in incremental units)
@@ -40,14 +39,13 @@ classdef (Abstract) ssMPC < QP
     
     methods       
     %% CONSTRUCTOR
-    function self = ssMPC(model, nx, nu, ny, H, q, A, b, C, d, LB, UB, solver, Q, R, P, Nc, Np, x0, xr, ur)
+    function self = ssMPC(model, nx, nu, ny, H, q, A, b, C, d, LB, UB, solver, Q, R, Nc, Np, x0, xr, ur)
         self@QP(H, q, A, b, C, d, LB, UB, 'solver', solver);
         self.startup_MPC = true;
         self.lockSetter = false;
         self.model = model;
         self.Q = Q;
         self.R = R;
-        self.P = P;
         self.N = Nc;
         self.Nc = Nc;
         self.Np = Np;
@@ -57,9 +55,7 @@ classdef (Abstract) ssMPC < QP
         self.x0 = x0;
         self.xr = xr;
         self.ur = ur;
-        self = self.ref_update;
-        self = self.x0_update;
-        self.startup_MPC = false;
+        
     end
     
     %% METHODS
@@ -96,16 +92,6 @@ classdef (Abstract) ssMPC < QP
     % R
     function self = set.R(self, value)
         self.R = value;
-        if ~self.startup_MPC
-            H = compute_H(self);
-            self.H = H;
-            self = self.ref_update;
-        end
-    end
-    
-    % P
-    function self = set.P(self, value)
-        self.P = value;
         if ~self.startup_MPC
             H = compute_H(self);
             self.H = H;
@@ -301,12 +287,18 @@ classdef (Abstract) ssMPC < QP
         
     end
     
+    methods (Abstract)
+        
+        extract_control(varargin) % Extracts the control action from the given vector of decision variables 
+        
+    end
+    
     methods (Abstract, Static)
        
         compute_H(varargin) % Compute the H and q ingredients of the QP
         compute_eq(varargin) % Compute the A and b ingredients of the QP (equality constraints)
         compute_ineq(varargin) % Compute the A and b ingredients of the QP (inequality constraints)
-             
+
     end
 
 end
