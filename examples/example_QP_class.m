@@ -1,4 +1,5 @@
 %% This script is an example of the use of the class QP
+% Example script for the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 %
 % We construct and solve a simple QP problem using quadprog. 
 % We also show how to change the ingredients of the QP problem after construction

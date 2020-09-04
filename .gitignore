@@ -1,6 +1,7 @@
 *.m~
 *.swp
 *.pdf
+*.asv
 /old/*
 /Tests/*
 /Personal/*

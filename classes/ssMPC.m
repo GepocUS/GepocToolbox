@@ -1,14 +1,42 @@
 %% ssMPC - Abstract class for state space MPC
-% This is the abstract class for all state space based MPC controller classes
-% The non-abstract classes must define their own properties for
+% This is the abstract class for all the state space based MPC controller classes
+% The non-abstract classes must define their own properties for additional cost function matrices
 %
+% This class extends the QP class. Therefore, it inherits its properties and methods.
+%
+% Properties
+%   - model: an instance of ssModel class. The model of the system. Used as the prediction model.
+%   - Q, R: Cost function matrices for the state and control input, respectively.
+%   - Nc, Np: Control horizon and prediction horizon, respectively
+%   - x0: Current value of the system state (in incremental units)
+%   - x0Eng % Current value of the system state (in engineering units)
+%   - xr % Current value of state reference (in incremental units)
+%   - xrEng % Current value of state reference (in engineering units)
+%   - ur % Current value of input reference (in incremental units)
+%   - urEng % Current value of input reference (in engineering units)
+%
+% Methods
+%   - ssMPC.solve(args): solves the MPC. It calls the solver defined by the QP property 'solver'
+%       args can be any series of optional agruments accepted by the selected solver.
+%       It returnes the following arguments: [u, z, f, exit_flag, Hist] = solve(args)
+%           - u: Control action to be applied to the system (in incremental units)
+%           - z: Optimal decision variables returned by the solver (if the solver converged)
+%           - f: Optimal cost function returned by the solver
+%           - exit_flag: exit flag returned by the solver
+%           - Hist: Additional information returned by the solver or constructed by the QP class solve method
+%   - ssMPC.setRef(self, xr, ur): Sets the reference (xr, ur) to the given values. In incremental units
+%   - ssMPC.setRefEng(self, xrEng, urEng): Sets the reference (xr, ur) to the given values. In engineering units
+%
+% This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
+% 
 
 % Author: Pablo Krupa (pkrupa@us.es)
 % Creation: 2020/05/03
-% Last update: 2020/05/03
+% Last update: 2020/09/04
 % 
 % Changelog: 
 %   v0.1 (2020/05/03): Initial commit version
+%   v0.1 (2020/09/04): Added documentation
 %
 
 classdef (Abstract) ssMPC < QP
@@ -54,8 +82,7 @@ classdef (Abstract) ssMPC < QP
         self.p = ny;
         self.x0 = x0;
         self.xr = xr;
-        self.ur = ur;
-        
+        self.ur = ur;       
     end
     
     %% METHODS
@@ -297,11 +324,11 @@ classdef (Abstract) ssMPC < QP
        
         compute_H(varargin) % Compute the H and q ingredients of the QP
         compute_eq(varargin) % Compute the A and b ingredients of the QP (equality constraints)
-        compute_ineq(varargin) % Compute the A and b ingredients of the QP (inequality constraints)
+        compute_ineq(varargin) % Compute the C and d ingredients of the QP (inequality constraints)
 
     end
 
 end
 
 %% TODOS:
-% TODO: Add documentation
+% TODO: Improve documantation

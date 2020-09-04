@@ -1,7 +1,13 @@
-%% EqualityMPC
-% Extends the ssMPC class
-% This is a simple MPC with temirnal equality constraint and a single prediction horizon
+%% EqualityMPC - MPC formulation with no terminal cost and an equality terminal constraint
+% This class extends the ssMPC class (which itself extends the QP class)
 %
+% A detailed description of the MPCT formulation can be found in equation (8) of:
+% P. Krupa, D. Limon, and T. Alamo, “Implementation of model predictive
+% control in programmable logic controllers,” IEEE Transactions on
+% Control Systems Technology, 2020.
+% 
+% This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
+% 
 
 % Author: Pablo Krupa (pkrupa@us.es)
 % Creation: 2020/05/03
@@ -134,9 +140,9 @@ classdef EqualityMPC < ssMPC
             % Calculate the A and b equality matrix and vector, respectively, for the nominal MPC formulation
             nx = size(A, 1);
             nu = size(B, 2);
-            Az = kron(eye(N), [A B]); % Diagonal de la matriz
+            Az = kron(eye(N), [A B]); % Diagonal of the matrix
             j = 0;
-            for i=1:nx:nx*N-nx % Inserto las matrices -I en Az
+            for i=1:nx:nx*N-nx % Insert matrices -I in Az
                 j = j+1;
                 Az(i:i+nx-1,((j-1)*(nx+nu)+(nu+nx+1)):((j-1)*(nx+nu)+(nx+nu+1)+nx-1)) = -eye(nx);
             end
@@ -169,6 +175,6 @@ classdef EqualityMPC < ssMPC
 end
 
 %% TODOS:
-% TODO: Add documentation
+% TODO: Add constructor documentation
 % TODO: Add an example
 % TODO: Test and debug

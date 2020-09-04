@@ -1,16 +1,21 @@
-%% Lax MPC
-% Extends the ssMPC class
-% This formulation uses a terminal cost P and no terminal constraint
+%% Lax MPC - MPC formulation with no terminal constraint and a terminal cost ||x - xr||_P
+% This class extends the ssMPC class (which itself extends the QP class)
 %
+% A detailed description of the MPCT formulation can be found in equation (9) of:
+% P. Krupa, D. Limon, and T. Alamo, “Implementation of model predictive
+% control in programmable logic controllers,” IEEE Transactions on
+% Control Systems Technology, 2020.
+% 
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
 % Author: Pablo Krupa (pkrupa@us.es)
 % Creation: 2020/05/07
-% Last update: 2020/05/07
+% Last update: 2020/09/04
 % 
 % Changelog: 
 %   v0.1 (2020/05/07): Initial commit version
+%   v0.1 (2020/09/04): Added documentation
 %
 
 classdef LaxMPC < ssMPC
@@ -155,9 +160,9 @@ classdef LaxMPC < ssMPC
             % Calculate the A and b equality matrix and vector, respectively.
             nx = size(A, 1);
             nu = size(B, 2);
-            Az = kron(eye(N-1), [model.A model.Bu]); % Diagonal de la matriz
+            Az = kron(eye(N-1), [model.A model.Bu]); % Diagonal of the matrix
             j = 0;
-            for i=1:nx:nx*N-nx % Inserto las matrices -I en Az
+            for i=1:nx:nx*N-nx % Insert matrices -I in Az
                 j = j+1;
                 Az(i:i+nx-1,((j-1)*(nx+nu)+(nu+nx+1)):((j-1)*(nx+nu)+(nx+nu+1)+nx-1)) = -eye(nx);
             end
@@ -191,6 +196,6 @@ classdef LaxMPC < ssMPC
 end
 
 %% TODOS:
-% TODO: Add documentation
+% TODO: Add constructor documantation
 % TODO: Add an example
 % TODO: Test and debug
