@@ -97,6 +97,7 @@
 % 
 % Changelog: 
 %   v0.1 (2020/04/29): Initial commit version.
+%   v0.1 (2020/09/14): Fixed bug: LBy and UBy not  setting to Inf when changing the yc output channel.
 %
 
 classdef ssModel < ss
@@ -326,6 +327,8 @@ classdef ssModel < ss
     function self = set.uu(self, value) % Setter
         if size(value,1)>1; value=value'; end % Make a row vector
         self.InputGroup.uu = value;
+        self.LBu = -Inf*ones(length(value), 1);
+        self.UBu = Inf*ones(length(value), 1);
     end
     % du
     function r = get.du(self); try r = self.InputGroup.du; catch; r = []; end; end % Getter
@@ -357,6 +360,8 @@ classdef ssModel < ss
     function self = set.yc(self, value) % Setter
         if size(value,1)>1; value=value'; end % Make a row vector
         self.OutputGroup.yc = value;
+        self.LBy = -Inf*ones(length(value), 1);
+        self.UBy = Inf*ones(length(value), 1);
     end
     % ym
     function r = get.ym(self); try r = self.OutputGroup.ym; catch; r = []; end; end % Getter
