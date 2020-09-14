@@ -5,6 +5,9 @@
 % P. Krupa, D. Limon, and T. Alamo, “Implementation of model predictive
 % control in programmable logic controllers,” IEEE Transactions on
 % Control Systems Technology, 2020.
+%
+% The decision variables of this controller are:
+%   z = (u_0, x_1, u_1, ..., x_{N-1}, u_{N-1}, x_N}
 % 
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
@@ -16,6 +19,7 @@
 % Changelog: 
 %   v0.1 (2020/05/07): Initial commit version
 %   v0.1 (2020/09/04): Added documentation
+%   v0.2 (2020/09/14): Added constraints C z <= d for bounds on C x + D u
 %
 
 classdef LaxMPC < ssMPC
@@ -23,6 +27,11 @@ classdef LaxMPC < ssMPC
     %% PROPERTIES
     properties
         P % Terminal cost
+    end
+    
+    properties (Hidden=true)
+        C_x0 % For updating vector d with the new x0 (see method x0_update)
+        d_x0 % For updating vector d with the new x0 (see method x0_update)
     end
     
     methods
@@ -86,12 +95,14 @@ classdef LaxMPC < ssMPC
             % Equality constraints
         [A, b] = LaxMPC.compute_eq(par.Results.model, par.Results.N);
             % Inequality constraints
-        [C, d, LB, UB] = LaxMPC.compute_ineq(par.Results.model, par.Results.N);
+        [C, d, LB, UB, C_x0, d_x0] = LaxMPC.compute_ineq(par.Results.model, par.Results.N);
         
         % Construct MPC
         self@ssMPC(model, nx, nu, ny, H, q, A, b, C, d, LB, UB, par.Results.solver,...
             par.Results.Q, par.Results.R, N, N, x0, xr, ur);
         self.P = par.Results.P;
+        self.C_x0 = C_x0;
+        self.d_x0 = d_x0;
         self = self.ref_update;
         self = self.x0_update;
         self.startup_MPC = false;
@@ -118,13 +129,21 @@ classdef LaxMPC < ssMPC
     
     %% PROTECTED METHODS
     methods (Access = protected)
-       
+        
         function self = ref_update(self)
             self.q = -[self.R*self.ur; kron(ones(self.N-1, 1), [self.Q*self.xr; self.R*self.ur]); self.P*self.xr];
         end
         
         function self = x0_update(self)
+            
+            % Update vector b
             self.b(1:self.n) = -self.model.A*self.x0;
+            
+            % Update vector d
+            if ~isempty(self.d_x0)
+                self.d(1:length(self.d_x0)) = self.d_x0 + self.C_x0*self.x0;
+            end
+            
         end
         
     end
@@ -133,13 +152,14 @@ classdef LaxMPC < ssMPC
     methods (Static)
         
         function [H, q] = compute_H(Q, R, P, N)
-            if isobject(Q)
+            % Obtain variables from function inputs
+            if isobject(Q) % This case assumes that the argument Q is in fact an instance of LaxMPC
                 R = Q.R;
                 P = Q.P;
                 N = Q.N;
                 Q = Q.Q;
             end
-            % Calculate the Hessian H and q vectors for the nominal MPC formulation
+            % Compute the Hessian H and q vectors for the nominal MPC formulation
             nx = size(Q, 1);
             nu = size(R, 1);
             H = blkdiag(R, kron(eye(N-1), [Q zeros(nx,nu); zeros(nu,nx) R]), P);
@@ -147,7 +167,8 @@ classdef LaxMPC < ssMPC
         end
         
         function [Az, b] = compute_eq(model, N)
-            if isobject(model) && ~isa(model, 'ssModel')
+            % Obtain variables from function inputs
+            if isobject(model) && ~isa(model, 'ssModel') % This case assumes that the argument Q is in fact an instance of LaxMPC
                     N = model.N;
                 model = model.model;
             end
@@ -157,7 +178,7 @@ classdef LaxMPC < ssMPC
             else
                 B = model.B;
             end
-            % Calculate the A and b equality matrix and vector, respectively.
+            % Compute the A and b equality matrix and vector, respectively.
             nx = size(A, 1);
             nu = size(B, 2);
             Az = kron(eye(N-1), [model.A model.Bu]); % Diagonal of the matrix
@@ -170,26 +191,121 @@ classdef LaxMPC < ssMPC
             b = zeros(N*nx, 1);
         end
         
-        function [C, d, LB, UB] = compute_ineq(model, N)
-            if isobject(model) && ~isa(model, 'ssModel')
+        function [C, d, LB, UB, C_x0, d_x0] = compute_ineq(model, N)
+            % Obtain variables from function inputs
+            if isobject(model) && ~isa(model, 'ssModel') % This case assumes that the argument Q is in fact an instance of LaxMPC
                 N = model.N;
                 model = model.model;
             end
             A = model.A;
             if isa(model, 'ssModel')
                 B = model.Bu;
+                Cc = model.Cc;
+                Dc = model.Dcu;
+                LBy_indx = find(~isinf(model.LBy));
+                UBy_indx = find(~isinf(model.UBy));
+                LBy = model.LBy(LBy_indx);
+                UBy = model.UBy(UBy_indx);
             else
                 B = model.B;
+                if isfield(model, 'C')
+                    Cc = model.C;
+                else
+                    Cc = [];
+                end
+                if isfield(model, 'D')
+                    Dc = model.D;
+                else
+                    Dc = [];
+                end
+                if isfield(model, 'LBy')
+                    LBy_indx = find(~isinf(model.LBy));
+                    LBy = model.LBy(LBy_indx);
+                else
+                    LBy_indx = [];
+                    LBy = [];
+                end
+                if isfield(model, 'UBy')
+                    UBy_indx = find(~isinf(model.UBy));
+                    UBy = model.UBy(UBy_indx);
+                else
+                    UBy_indx = [];
+                    UBy = [];
+                end
             end
-            % Calculate inequality matrix and vector C and d, as well as lower and upper bounds LB and UB for the nominal MPC formulation
+            % Dimensions
             nx = size(A, 1);
             nu = size(B, 2);
-            % TODO: Computation of C and d
-            C = [];
-            d = [];
+            ny = size(Cc, 1);
+            % Make Cc = 0 or Dc = 0 under certain conditions
+            if ~isempty(Cc) && isempty(Dc)
+                Dc = zeros(ny, nu);
+            elseif isempty(Cc) && ~isempty(Dc)
+                Cc = zeros(ny, nu);
+            end
+            
+            % Compute the inequality constraint matrix and vector for C z <= d
+            if (~isempty(Cc) || ~isempty(Dc))
+                % Compute upper bounds
+                if ~all(isinf(model.UBy))                   
+                    Ccu = Cc(UBy_indx, :);
+                    Dcu = Dc(UBy_indx, :);
+                    Cu = kron(eye(N-1), [Ccu Dcu]); % Prediction horizon
+                    Cu = [zeros(size(Cu, 1), nu), Cu]; % u_0
+                    Cu = [Cu, zeros(size(Cu, 1), nx)]; % x_N
+                    du = kron(ones(N-1, 1) , UBy);
+                else
+                    Ccu = [];
+                    Dcu = [];
+                    Cu = [];
+                    du = [];
+                end
+                % Compute lower bounds
+                if ~all(isinf(model.UBy))
+                    Ccl = -Cc(LBy_indx, :);
+                    Dcl = -Dc(LBy_indx, :);
+                    Cl = kron(eye(N-1), [Ccl Dcl]); % Prediction horizon                    
+                    Cl = [zeros(size(Cl, 1), nu), Cl]; % u_0             
+                    Cl = [Cl, zeros(size(Cl, 1), nx)]; % x_N
+                    dl = kron(ones(N-1, 1) , -LBy);
+                else
+                    Ccl = [];
+                    Dcl = [];
+                    Cl = [];
+                    dl = [];
+                end
+                
+                % Compute matrix C and vector d
+                C = [Cu; Cl];
+                d = [du; dl];
+                if ~all(all(Dcu == 0))
+                    C_aux = [Dcu zeros(nu, size(C, 2) - nu)];
+                    d_x0 = UBy;
+                    C_x0 = -Ccu;
+                else
+                    C_aux = [];
+                    d_x0 = [];
+                    C_x0 = [];
+                end
+                if ~all(all(Dcl == 0))
+                    C_aux = [C_aux; Dcl zeros(nu, size(C, 2) - nu)];
+                    d_x0 = [d_x0; -LBy];
+                    C_x0 = [C_x0; -Ccl];
+                end
+                C = [C_aux; C];
+                d = [d_x0; d];
+                
+            else
+                C = [];
+                d = [];
+                C_x0 = [];
+                d_x0 = [];
+            end
+            
+            % Compute lower and upper bounds of the decision variables
             LB = [model.LBu; kron(ones(N-1,1), [model.LBx; model.LBu]); model.LBx]; 
             UB = [model.UBu; kron(ones(N-1,1), [model.UBx; model.UBu]); model.UBx];
-        end 
+        end
         
     end
         

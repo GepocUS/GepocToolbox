@@ -1,5 +1,5 @@
 %% QP - Class for Quadratic Programming problems
-%
+% 
 % Defines a QP problem of the form
 % 
 %   min 1/2 z'*H*z + q'*z
@@ -19,7 +19,7 @@
 % - Hinv: quick way to access the inverse of H. It is only computed the first time it is called
 % - isDiag: Boolean indicating if the Hessian is diagonal
 % - isPosDef: Boolean indicating if the Hessian is strictly positive definite
-%
+% 
 % Useful methods
 % - QP.eval(z): evaluates the functional at point z
 % - QP.gradient(z): Returnes the gradient of the functional at point z
