@@ -64,10 +64,13 @@ classdef QP
         isPosDef % Boolean that indicates if the QP problem is strictly positive definite
     end
     properties (Hidden=true)
-        computeInverse % Determines if the inverse of the Hessian is computed on construction. Defaults to 0.
+        computeInverse % Determines if the inverse of the Hessian is computed on construction. Defaults to true
+        computeWeq % Determines if the metric Weq is computed on construction. Defaults to true
         options % Options for solver
-        debug % Debug mode (adds verbose). Defaults to 0
+        debug % Debug mode (adds verbose). Defaults to false
+        flexible % If true, does not check for argument con
         Hinv % Inverve of the Hessian (if it is near singlular it is set to empty)
+        Weq % Metric for the dual problem where the equality constraints are included in the Lagrangian    
     end
     properties (Access = protected, Hidden=true)
         startup % Determines if the object if being created. It avoind updates while constructor runs (is set to 0 after the constructor finishes)
@@ -85,7 +88,8 @@ classdef QP
             def_UB = [];
             def_solver = 'quadprog';
             def_debug = false;
-            def_computeInverse = false;
+            def_computeInverse = true;
+            def_computeWeq = true;
             % Parser
             p = inputParser;
             p.CaseSensitive = false;
@@ -104,6 +108,8 @@ classdef QP
             addParameter(p, 'solver', def_solver);
             addParameter(p, 'debug', def_debug, @(x) islogical(x) || x==1 || x==0);
             addParameter(p, 'computeInverse', def_computeInverse, @(x) islogical(x) || x==1 || x==0);
+            addParameter(p, 'computeWeq', def_computeWeq, @(x) islogical(x) || x==1 || x==0);
+           
             % Parse
             parse(p, H, q, varargin{:})
             % Make vectors column vectors
@@ -126,16 +132,22 @@ classdef QP
             self.UB = p.Results.UB;
             self.solver = p.Results.solver;
             self.computeInverse = p.Results.computeInverse;
+            self.computeWeq = p.Results.computeWeq;
             if strcmp(self.solver, 'quadprog')
                 self.options = optimoptions('quadprog', 'Display', 'off');
             else
                 self.options = {};
             end
             if self.computeInverse; self = self.updateHinv; end
+            if self.computeWeq; self = self.updateWeq; end
             self = self.updateDim;
             self = self.updateNeq;
             self = self.updateNineq;
-            if self.debug; isConsistent(self); end
+            check_consistency = isConsistent(self);
+            if check_consistency == 0
+                error('Dimensions of QP problem not consistent');
+            end
+            self.startup = false; % Startup finished
         end
        
    %% METHODS
@@ -196,9 +208,67 @@ classdef QP
                 g(:,i) = self.H*z(:,i) + self.q;
             end
         end
+        
+        function W = dual_metric_eq(self)
+            % Returns the metric W associated with the Lagrangian in which the equality constraints
+            % have been included using the dual variables lambda as follows
+            % L(z, lambda) = 1/2 z'*H*z + q'*z + (A*z-b)'*lambda
+            try
+                W = self.A*self.Hinv*self.A';
+            catch
+                W = [];
+            end
+        end
+        
+        function self = update(self, varargin)
+            % Updates variables provided by parameter-value
+            % Must be called as myQP = myQP.update('param1', value1, 'param2', value2, ...)
+            
+            % Fields that can be passed to the function
+            allowedFields = {'H', 'q', 'A', 'b', 'C', 'd', 'LB', 'UB'};
+            
+            % Get the new data
+            if isempty(varargin)
+                return;
+            elseif length(varargin) == 1
+                if ~isstruct(varargin{1})
+                    error('A single input to update must be a structure with the data');
+                else
+                    newData = varargin{1};
+                end
+            else
+                newData = struct(varargin{:});
+            end
+            
+            % Check if there are unknown parameter names
+            newFields = fieldnames(newData);
+            badFieldsIdx = find(~ismember(newFields,allowedFields));
+            if ~isempty(badFieldsIdx)
+                 error('Unrecognized input field ''%s'' detected',newFields{badFieldsIdx(1)});
+            end
+            
+            % Find new fields. Assign old fields if non is provided
+            try H = double(full(newData.H(:))); catch H = self.H; end
+            try q = double(full(newData.q(:))); catch q = self.q; end
+            try A = double(full(newData.A(:))); catch A = self.A; end
+            try b = double(full(newData.b(:))); catch b = self.b; end
+            try C = double(full(newData.C(:))); catch C = self.C; end
+            try d = double(full(newData.d(:))); catch d = self.d; end
+            try LB = double(full(newData.LB(:))); catch LB = self.LB; end
+            try UB = double(full(newData.UB(:))); catch UB = self.UB; end
+            
+            % Construct new QP
+            self = QP(H, q, A, b, C, d, LB, UB,...
+                     'solver', self.solver, 'debug', self.debug,...
+                     'computeInverse', self.computeInverse, 'computeWeq', self.computeWeq);
+           
+        end
 
-        function [r, message] = isConsistent(self)
+        function [r, message] = isConsistent(self, error_out)
             % Returns 1 if all dimensions are consistent. 0 if not. Errors detected are printed in the message string
+            if nargin == 1
+                error_out = 0;
+            end
             r = 1;
             message = '';
             if size(self.H, 1) ~= size(self.q, 1)
@@ -237,6 +307,9 @@ classdef QP
                 fprintf('Dimension mismatch in QP. Message errors:\n');
                 fprintf(message);
             end
+            if error_out && r == 0
+                error('Dimensions of QP problem not consistent');
+            end
         end
        
    %% SETTERS and GETTERS
@@ -245,7 +318,13 @@ classdef QP
         % Update the value of H
         self.H = value;
         if ~self.startup
-            self = self.updateHinv;
+            isConsistent(self, 1);
+            if ~isempty(self.Hinv)
+                self = self.updateHinv;
+            end
+            if ~isempty(self.Weq)
+                self = self.updateWeq;
+            end
             self = self.updateDim;
         end
     end
@@ -255,6 +334,7 @@ classdef QP
         if size(value,2)>1; value=p.value'; end % Make f a column vector
         self.q = value;
         if ~self.startup
+            isConsistent(self, 1);
             self = self.updateDim;
         end
     end
@@ -263,15 +343,20 @@ classdef QP
         % Update the value of A
         self.A = value;
         if ~self.startup
-            self.updateNeq;
+            isConsistent(self, 1);
+            if ~isempty(self.Weq)
+                self = self.updateWeq;
+            end
+            self.updateNeq; 
         end
     end
-
+    
     function self = set.b(self, value)
         % Update the value of b
         if size(value,2)>1; value=p.value'; end % Make f a column vector
         self.b = value;
         if ~self.startup
+            isConsistent(self, 1);
             self.updateNeq;
         end
     end
@@ -280,6 +365,7 @@ classdef QP
         % Update the value of C
         self.C = value;
         if ~self.startup
+            isConsistent(self, 1);
             self.updateNineq;
         end
     end
@@ -289,6 +375,7 @@ classdef QP
         if size(value,2)>1; value=p.value'; end % Make f a column vector
         self.d = value;
         if ~self.startup
+            isConsistent(self, 1);
             self.updateNineq;
         end
     end
@@ -297,12 +384,18 @@ classdef QP
         % Update the value of LB
         if size(value,2)>1; value=p.value'; end % Make f a column vector
         self.LB = value;
+        if ~self.startup
+            isConsistent(self, 1);
+        end
     end
 
     function self = set.UB(self, value)
         % Update the value of UB
         if size(value,2)>1; value=p.value'; end % Make f a column vector
         self.UB = value;
+        if ~self.startup
+            isConsistent(self, 1);
+        end
     end
 
     function self = set.solver(self, solver_str)
@@ -337,6 +430,15 @@ classdef QP
         r = self.Hinv;
     end
     
+    function r = get.Weq(self)
+        % Getter for Weq. If it is empty, compute it first
+        if isempty(self.Weq)
+            r = self.dual_metric_eq; 
+        else
+            r = self.Weq;
+        end
+    end
+    
    end
 
  %% PROTECTED METHODS
@@ -353,6 +455,11 @@ classdef QP
                 end
                 self.Hinv = [];
             end
+        end
+        
+        function self = updateWeq(self)
+            % Updates the metric Weq
+            self.Weq = self.dual_metric_eq;
         end
        
        function self = updateDim(self)
@@ -372,3 +479,6 @@ classdef QP
        
     end
 end
+
+%% TODOS
+%   TODO: Add property for setting all the computeXX to true or false.
