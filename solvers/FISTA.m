@@ -72,7 +72,6 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA(g_eval, R, varargin)
     par.CaseSensitive = false;
     par.FunctionName = 'FISTA';
     % Required
-    
     addRequired(par, 'g_eval', @(x) isa(x, 'function_handle'));
     addRequired(par, 'R', @(x) isnumeric(x) && ((size(x,1)==size(x,2)) || (min(size(x))==1)));
     % Optional
@@ -114,19 +113,17 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA(g_eval, R, varargin)
     if min(size(R))~=1
         R = diag(R); % Turn R into a vector if a matrix was given
     end
-    if all(R < 0); error('RFISTA:InputError', 'Matrix R must be strictly positive definite'); end % R > 0
+    if all(R < 0); error('FISTA:InputError', 'Matrix R must be strictly positive definite'); end % R > 0
     if k_min >= k_max
         if verbose>=3
-            warning('RFISTA:InputWarning', 'Value of k_min >= k_max. Algorithm will exit at k_max iterations allways');
+            warning('FISTA:InputWarning', 'Value of k_min >= k_max. Algorithm will exit at k_max iterations allways');
         end
     end
-    if tol==0; warning('RFISTA:InputWarning', 'Value of tol=0. Algorithm will never converge to this tolerance'); end
+    if tol==0; warning('FISTA:InputWarning', 'Value of tol=0. Algorithm will never converge to this tolerance'); end
     if genHist>2
-        %warning('RFISTA:InputWarning', 'Value of genHist greater that maximum of 2. Taking genHist = 2');
         genHist = 2;
     end
     if verbose>3
-        %warning('RFISTA:InputWarning', 'Value of verbose greater that maximum of 3. Taking verbose = 3');
         verbose = 3;
     end
     if isempty(plus_op)
@@ -135,13 +132,13 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA(g_eval, R, varargin)
     
     %% Initialization
     done = false; % Flag that indicates the end of the algorithm
-    print_counter = 0;
-    print_title = 0;
     k = 0; % Counter for the total number of FISTA iterations performed
     yk1 = plus_op(z_0, g_eval, R); % Value of y at iteration k-1. This is the value of y_0
     xk = zeros(length(z_0), 1); % Value of x at iteration k
     xk1 = yk1; % Value of x at iteration k-1. This is the value of x_0
-    tk1 = t0; % Value of t at iteration k-1. We set the value of t_0 = 1
+    tk1 = t0; % Value of t at iteration k-1
+    print_counter = 0; % Counter used to determine when to show info to user
+    print_title = 0; % Conter used to determine when to reprint titles line
     
     % Declare historics
     if initialize_Hist
