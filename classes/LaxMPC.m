@@ -2,8 +2,8 @@
 % This class extends the ssMPC class (which itself extends the QP class)
 %
 % A detailed description of the MPCT formulation can be found in equation (9) of:
-% P. Krupa, D. Limon, and T. Alamo, “Implementation of model predictive
-% control in programmable logic controllers,” IEEE Transactions on
+% P. Krupa, D. Limon, and T. Alamo, ï¿½Implementation of model predictive
+% control in programmable logic controllers,ï¿½ IEEE Transactions on
 % Control Systems Technology, 2020.
 %
 % The decision variables of this controller are:
@@ -32,6 +32,8 @@ classdef LaxMPC < ssMPC
     properties (Hidden=true)
         C_x0 % For updating vector d with the new x0 (see method x0_update)
         d_x0 % For updating vector d with the new x0 (see method x0_update)
+        Walpha % Alpha matrices of the Cholesky factorization of the Weq matrix
+        Wbeta % Beta matrices of the Cholesky factorization of the Weq matrix (diagonal elemnts inverted)
     end
     
     methods
@@ -99,14 +101,15 @@ classdef LaxMPC < ssMPC
         
         % Construct MPC
         self@ssMPC(model, nx, nu, ny, H, q, A, b, C, d, LB, UB, par.Results.solver,...
-            par.Results.Q, par.Results.R, N, N, x0, xr, ur);
+            par.Results.Q, par.Results.R, N, N, x0, xr, ur, 'computeInverse', true, 'computeWeq', true);
         self.P = par.Results.P;
         self.C_x0 = C_x0;
         self.d_x0 = d_x0;
         self = self.ref_update;
         self = self.x0_update;
+        self = self.Wc_update;
         self.startup_MPC = false;
-        
+ 
     end
     
     function u = extract_control(self, z)
@@ -144,6 +147,10 @@ classdef LaxMPC < ssMPC
                 self.d(1:length(self.d_x0)) = self.d_x0 + self.C_x0*self.x0;
             end
             
+        end
+        
+        function self =  Wc_update(self)
+            [self.Walpha,  self.Wbeta] = LaxMPC.sparse_Wc(self);
         end
         
     end
@@ -307,11 +314,32 @@ classdef LaxMPC < ssMPC
             UB = [model.UBu; kron(ones(N-1,1), [model.UBx; model.UBu]); model.UBx];
         end
         
+        function [alpha, beta] = sparse_Wc(self)
+            
+            % Initialize
+            alpha = zeros(self.n, self.n, self.N-1);
+            beta = zeros(self.n, self.n, self.N);
+            Wc = chol(self.Weq);
+            
+            % Compute alpha matrices
+            for i = 1:self.N-1
+                alpha(:,:,i)  = Wc((i-1)*self.n+(1:self.n),i*self.n+(1:self.n));
+            end
+            
+            % Compute beta matrices
+            for i = 1:self.N
+                beta(:,:,i) = Wc((i-1)*self.n+(1:self.n),(i-1)*self.n+(1:self.n));
+                % Invert elements in the diagonal
+                for j = 1:self.n 
+                    beta(j,j,i) = 1/beta(j,j,i);
+                end
+            end
+            
+        end
+        
     end
         
 end
 
 %% TODOS:
-% TODO: Add constructor documantation
-% TODO: Add an example
-% TODO: Test and debug
+% TODO: Add update call to Walpha and Wbeta if any of its ingredients is changed (matrices, model or N). Extend parent methods.
