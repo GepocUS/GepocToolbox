@@ -67,8 +67,8 @@ classdef (Abstract) ssMPC < QP
     
     methods       
     %% CONSTRUCTOR
-    function self = ssMPC(model, nx, nu, ny, H, q, A, b, C, d, LB, UB, solver, Q, R, Nc, Np, x0, xr, ur)
-        self@QP(H, q, A, b, C, d, LB, UB, 'solver', solver);
+    function self = ssMPC(model, nx, nu, ny, H, q, A, b, C, d, LB, UB, solver, Q, R, Nc, Np, x0, xr, ur, varargin)
+        self@QP(H, q, A, b, C, d, LB, UB, 'solver', solver, varargin{:});
         self.startup_MPC = true;
         self.lockSetter = false;
         self.model = model;
