@@ -161,19 +161,27 @@ classdef QP
                 % Use external function handler. It must accept the arguments as shown here.
                 varargout{:} = self.solver(self.H, self.q, self.C, self.d, self.A, self.b, self.LB, self.UB, varargin);
             else
+                
+                % Get options
+                if isempty(varargin)
+                        vars = self.options;
+                else
+                        vars = varargin;
+                end
 
                 % quadprog
                 if strcmp(self.solver, 'quadprog')
                     if isempty(varargin)
-                        vars = {[], self.options};
-                    else
-                        vars = varargin;
+                        vars = {[], vars};
                     end
                     [z, f, exit_flag, output, lambda] = quadprog(self.H, self.q, self.C, self.d, self.A, self.b, self.LB, self.UB, vars{:});
                     Hist = output; % Additional information returned by quadprog
                     Hist.lamdba = lambda ; % Optimal dual variables for equality and inequality constraints
                     Hist.k = output.iterations; % Number of iterations
-
+                    
+                elseif strcmp(self.solver, 'FISTA_simpleQP')
+                    [z, f, exit_flag, Hist] = FISTA_simpleQP(self, vars{:});
+                
                 % Solver not available
                 else
                     warning('QP:SolverNotRecognized', 'Solver not recognized. Returning empty arrays\n')
@@ -399,17 +407,23 @@ classdef QP
     end
 
     function self = set.solver(self, solver_str)
+        allowed_solvers = {'quadprog', 'FISTA_simpleQP'};
         % Update the value of solver
         if ~ischar(solver_str) && ~isa(solver_str, 'function_handle')
             error('QP:InputError', 'QP.solver must be a string of characters or a function handler')
         end
-        self.solver = solver_str;
+        if ischar(solver_str)
+           if ~ismember(solver_str, allowed_solvers)
+               error('QP:InputError', 'QP.solver is not a supported solvers')
+           end
+        end
         if ~strcmp(self.solver, solver_str) && ~self.startup
             self.options = {};
             if self.debug
                 fprintf('Set solver: Erased options for solver');
             end
         end
+        self.solver = solver_str;
     end
     
     function r = get.isPosDef(self)
@@ -475,7 +489,7 @@ classdef QP
        function self = updateNineq(self)
            % Update the n_ineq variable
            self.n_ineq = size(self.C, 1);
-        end
+       end
        
     end
 end
