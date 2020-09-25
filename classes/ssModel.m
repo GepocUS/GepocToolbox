@@ -188,9 +188,9 @@ classdef ssModel < ss
         def_uu = 1:nu;
         def_du = [];
         def_dm = [];
-        def_yr = [];
-        def_yc = [];
-        def_ym = [];
+        def_yr = 1:ny;
+        def_yc = 1:ny;
+        def_ym = 1:ny;
         def_LBxEng = -inf*ones(nx, 1);
         def_UBxEng = inf*ones(nx, 1);
         def_LBuEng = -inf*ones(nu, 1);
