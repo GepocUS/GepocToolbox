@@ -135,12 +135,17 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
     end 
     % Make A sparse
     if use_sparse
-        A =  sparse(A);
+        A = sparse(A);
+    end
+    % Make H sparse
+    if use_sparse
+        H = sparse(H);
     end
     
     %% Initialization
     done = false; % Flag that indicates the end of the algorithm
     dim = size(H, 1); % Number of decision variables
+    dim_dual = length(lambda_0); % Number of dual variables
     k = 0; % Counter for the total number of iterations performed
     z =  zeros(dim, 1); % Decision variables of the QP problem
     lambda = lambda_0; % Dual variable
@@ -149,6 +154,31 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
     print_counter = 0; % Counter used to determine when to show info to user
     print_title = 0; % Conter used to determine when to reprint titles line
     
+    % Declare historics
+    if initialize_Hist
+        if genHist >= 1
+            hNorm_res = zeros(1, k_max);
+            hF = zeros(1, k_max);
+        end
+        if genHist >= 2
+            hZ = zeros(dim, k_max);
+            hRes = zeros(dim_dual, k_max);
+            hD_lambda = zeros(dim_dual, k_max);
+            hMu = zeros(dim_dual, k_max);
+            hT = zeros(1, k_max);
+            hLambda = zeros(dim_dual, k_max);
+        end
+    end
+    
+    % Initial verbose to user
+    if verbose >= 2
+        fprintf('Starting FISTA_simpleQP algorithm\n');
+    end
+    if verbose >= 3
+        fprintf('\tParameters: k_max = %d, tol = %g\n', k_max, tol);
+        fprintf('\tNumber of decision variables: %d\n\tNumber of dual variables: %d\n\n', dim, dim_dual);
+        fprintf('\t    Iter  ||res||      f(z)\n');
+    end
     
     %% Algorithm
     while ~done
@@ -191,10 +221,44 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
             e_flag = -1;
         end
         
+        % Save historics
+        if genHist >= 1
+            hNorm_res(k) = norm_res;
+            hF(k) = 0.5*z'*H*z + q'*z;
+        end
+        if genHist >= 2
+            hZ(:, k) = z;
+            hRes(:, k) = res;
+            hD_lambda(:, k) = D_lambda;
+            hMu(:, k) = mu;
+            hT(k) = tk;
+            hLambda(:, k) = lambda;
+        end
+        
         % Update variables
         tk1 = tk;
         mu_1 = mu;
         
+        % Verbose info to user
+        if verbose >= 3
+            if print_title == 10
+                print_title = 0;
+                fprintf('\t   Iter ||g(y_k)||_*      f(x_k)');
+                fprintf('\n');
+            end
+            if genHist == 0
+                f = 0.5*z'*H*z + q'*z;
+            else
+                f = hF(k);
+            end
+            print_counter = print_counter + 1;
+            if print_counter == print_counter_step || k == 1
+                print_title = print_title + 1;
+                print_counter = 0;
+                fprintf('\t%6d    %4.5e  %4.5e', k, norm_res, f);
+                fprintf('\n');
+            end
+        end
     end
     
     %% Construct historic and return variables
@@ -202,10 +266,48 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
     f_opt = 0.5*z_opt'*H*z_opt + q'*z_opt;
     
     Hist.k = k;
+    Hist.lambda_0 = lambda_0;
+    Hist.t_0 = t_0;
+    if genHist >= 1
+        Hist.norm_res = hNorm_res(1:k);
+        Hist.f = hF(1:k);
+    end
+    if genHist >= 2
+        Hist.z = hZ(:, 1:k);
+        Hist.res = hRes(:, 1:k);
+        Hist.D_lambda = hD_lambda(:, 1:k);
+        Hist.mu = hMu(:, 1:k);
+        Hist.t = hT(1:k);
+        Hist.lambda = hLambda(:, 1:k);
+    end
+    
+    % Final verbose to user
+    if verbose >= 3
+        if print_counter ~= print_counter_step
+            fprintf('\t%6d    %4.5e  %4.5e\n', k, norm_res, f);
+        end
+        fprintf('\n');
+    end
+    if e_flag <= 0
+        if verbose >= 1
+            if e_flag == -1
+                fprintf('\tWARNING: Algorithm FISTA_simpleQP did not converge within the allowed number of iterations %d\n', k_max);
+            end
+            fprintf('\tFISTA_simpleQP exit flag is %d', e_flag);
+            fprintf('\tElapsed time between start and end of algorithm: %fs\n', Hist.time.total);
+        end
+    else      
+        if verbose >=2
+            fprintf('\tAlgorithm exited successfully with exit flag %d and the following results\n', e_flag);
+            fprintf('\t\tNumber of iterations: %d (of a maximum of %d)\n', k, k_max);
+            fprintf('\t\tf(z_opt) = %g\t||res|| = %g\n', f_opt, norm_res);
+            %fprintf('\t\tElapsed time between start and end of algorithm: %fs\n', Hist.time.total);
+        end
+    end
+    
     
 end
 
 %% TODOS:
-%   - TODO: Add generation of Historic variables
-%   - TODO: Add verbose
+%   - TODO: Add timers
 %   - TODO: Add function handler for computing A*z - b
