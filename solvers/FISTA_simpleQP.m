@@ -308,6 +308,3 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
     
 end
 
-%% TODOS:
-%   - TODO: Add timers
-%   - TODO: Add function handler for computing A*z - b

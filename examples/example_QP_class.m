@@ -77,3 +77,4 @@ myQP_unconstrained.solver = solver_unconstrained_QP;
 % We can now solve the problem as usual
 z_opt_mysolver = myQP_unconstrained.solve();
 % z_opt_mysolver should be equal to the value returned when we used the quadprog solver, i.e. z_opt_mysolver = z_opt_unconstrained
+

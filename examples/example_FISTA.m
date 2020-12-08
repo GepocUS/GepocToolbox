@@ -48,3 +48,4 @@ z_0 = zeros(n, 1); % Initial value of the decision variables
 %% Compare the result to quadprog
 z_qp = quadprog(H, q, [], []);
 diff_with_quadprog = max(abs(z_opt - z_qp))
+

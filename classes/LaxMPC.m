@@ -341,5 +341,3 @@ classdef LaxMPC < ssMPC
         
 end
 
-%% TODOS:
-% TODO: Add update call to Walpha and Wbeta if any of its ingredients is changed (matrices, model or N). Extend parent methods.

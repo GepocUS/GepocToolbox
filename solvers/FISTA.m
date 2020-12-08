@@ -315,7 +315,3 @@ function y_plus = default_plus_operator(y, g, R)
     y_plus = y - g(y)./R;
 end
 
-%% TODOS andd Notes
-
-% TODO: Add other timers
-% TODO: Add documentation for other optional arguments

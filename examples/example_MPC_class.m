@@ -78,3 +78,4 @@ LMPC.ur = ur;
 
 % Lax MPC
 [ul, zl, fl, el, Hl] = LMPC.solve;
+

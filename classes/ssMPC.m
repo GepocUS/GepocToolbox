@@ -330,5 +330,3 @@ classdef (Abstract) ssMPC < QP
 
 end
 
-%% TODOS:
-% TODO: Improve documantation

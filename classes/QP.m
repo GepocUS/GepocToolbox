@@ -494,5 +494,3 @@ classdef QP
     end
 end
 
-%% TODOS
-%   TODO: Add property for setting all the computeXX to true or false.

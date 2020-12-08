@@ -216,7 +216,3 @@ classdef TrackingMPC < ssMPC
     
 end
 
-%% TODOS:
-% TODO: Add an example
-% TODO: Test and debug
-% TODO: Add box reduction for the xs and us constraints

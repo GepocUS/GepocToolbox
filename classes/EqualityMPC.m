@@ -174,7 +174,3 @@ classdef EqualityMPC < ssMPC
     
 end
 
-%% TODOS:
-% TODO: Add constructor documentation
-% TODO: Add an example
-% TODO: Test and debug
