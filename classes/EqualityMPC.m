@@ -2,8 +2,8 @@
 % This class extends the ssMPC class (which itself extends the QP class)
 %
 % A detailed description of the MPCT formulation can be found in equation (8) of:
-% P. Krupa, D. Limon, and T. Alamo, “Implementation of model predictive
-% control in programmable logic controllers,” IEEE Transactions on
+% P. Krupa, D. Limon, and T. Alamo, ï¿½Implementation of model predictive
+% control in programmable logic controllers,ï¿½ IEEE Transactions on
 % Control Systems Technology, 2020.
 % 
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
@@ -91,7 +91,7 @@ classdef EqualityMPC < ssMPC
     end
     
     function u = extract_control(self, z)
-            u = z(self.n+(1:self.m));
+            u = z(1:self.m);
     end
     
     end
@@ -100,12 +100,12 @@ classdef EqualityMPC < ssMPC
     methods (Access = protected)
        
         function self = ref_update(self)
-            self.q = -kron(ones(self.N, 1), [self.Q*self.xr; self.R*self.ur]);
-            self.b(self.N*self.n+1:end) = self.xr;
+            self.q = -[self.R*self.ur; kron(ones(self.N-1, 1), [self.Q*self.xr; self.R*self.ur])];
+            self.b((self.N-1)*self.n+1:end) = self.xr;
         end
         
         function self = x0_update(self)
-            self.b(1:self.n) = self.x0;
+            self.b(1:self.n) = -self.model.A*self.x0;
         end
         
     end
@@ -122,8 +122,8 @@ classdef EqualityMPC < ssMPC
             % Calculate the Hessian H and q vectors for the nominal MPC formulation
             nx = size(Q, 1);
             nu = size(R, 1);
-            H = kron(eye(N), [Q zeros(nx,nu); zeros(nu,nx) R]);
-            q = zeros(N*(nx+nu),1);
+            H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)));
+            q = zeros(N*(nx+nu)-nx,1);
         end
         
         function [Az, b] = compute_eq(model, N)
@@ -140,14 +140,15 @@ classdef EqualityMPC < ssMPC
             % Calculate the A and b equality matrix and vector, respectively, for the nominal MPC formulation
             nx = size(A, 1);
             nu = size(B, 2);
-            Az = kron(eye(N), [A B]); % Diagonal of the matrix
+            Az = kron(eye(N-1), [A B]); % Diagonal of the matrix
             j = 0;
             for i=1:nx:nx*N-nx % Insert matrices -I in Az
                 j = j+1;
                 Az(i:i+nx-1,((j-1)*(nx+nu)+(nu+nx+1)):((j-1)*(nx+nu)+(nx+nu+1)+nx-1)) = -eye(nx);
             end
-            Az = [eye(nx) zeros(nx, nx*N-nx+nu*N); Az]; % Initial condition
-            b = zeros((N+1)*nx, 1);
+            Az = [model.Bu -eye(nx) zeros(nx, size(Az, 2) - nx); zeros(size(Az, 1), nu) Az]; % Initial condition
+            Az = Az(:,1:end-nx);
+            b = zeros(N*nx, 1);
         end
        
         function [C, d, LB, UB] = compute_ineq(model, N)
@@ -164,10 +165,12 @@ classdef EqualityMPC < ssMPC
             % Calculate inequality matrix and vector C and d, as well as lower and upper bounds LB and UB for the nominal MPC formulation
             nx = size(A, 1);
             nu = size(B, 2);
-            C = kron(eye(N), [eye(nx) zeros(nx, nu); zeros(nu, nx) eye(nu); -eye(nx) zeros(nx, nu); zeros(nu, nx) -eye(nu)]);
-            d = kron(ones(N,1), [model.UBx; model.UBu; -model.LBx; -model.LBu]);
-            LB = kron(ones(N,1), [model.LBx; model.LBu]); 
-            UB = kron(ones(N,1), [model.UBx; model.UBu]);
+            %C = kron(eye(N), [eye(nx) zeros(nx, nu); zeros(nu, nx) eye(nu); -eye(nx) zeros(nx, nu); zeros(nu, nx) -eye(nu)]);
+            %d = kron(ones(N,1), [model.UBx; model.UBu; -model.LBx; -model.LBu]);
+            C = [];
+            d = [];
+            LB = [model.LBu; kron(ones(N-1,1), [model.LBx; model.LBu])]; 
+            UB = [model.UBu; kron(ones(N-1,1), [model.UBx; model.UBu])];
         end 
 
     end
