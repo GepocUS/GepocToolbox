@@ -169,7 +169,7 @@ classdef LaxMPC < ssMPC
             % Compute the Hessian H and q vectors for the nominal MPC formulation
             nx = size(Q, 1);
             nu = size(R, 1);
-            H = blkdiag(R, kron(eye(N-1), [Q zeros(nx,nu); zeros(nu,nx) R]), P);
+            H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), P);
             q = zeros(N*(nx+nu),1);
         end
         
@@ -188,7 +188,7 @@ classdef LaxMPC < ssMPC
             % Compute the A and b equality matrix and vector, respectively.
             nx = size(A, 1);
             nu = size(B, 2);
-            Az = kron(eye(N-1), [model.A model.Bu]); % Diagonal of the matrix
+            Az = kron(eye(N-1), [A B]); % Diagonal of the matrix
             j = 0;
             for i=1:nx:nx*N-nx % Insert matrices -I in Az
                 j = j+1;
