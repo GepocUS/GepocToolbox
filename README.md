@@ -1,16 +1,25 @@
 # GepocToolbox
 
-This Matlab toolbox contains an assortment of classes and functions for various uses in the fields of predictive control and optimization. Some of the main features are:
+Welcome to GepocToolbox, a Matlab toolbox that contains an assortment of classes and function useful for those working in the fields of optimization and predictive control.
 
-* A class for defining and solving QP problems.
+GepocToolbox is developed and maintained by the [GEPOC](grupos.us.es/gepoc/) research team at the University of Seville.
 
-* A class that extends the **ss** class from Matlab that makes it easier to work with state space models obtained from the linearizing plants subject to constraints.
+## Installation
 
-* Classes for different MPC formulations that make defining the MPC optimization problem and solving them easy.
+Clone or download the contents of the repository to a directory of your choice, which we will call `$root$` in this explanation. Then, add the following folders to Matlab's path.
 
-* Various solvers for different classes of optimization problems.
+> * $root$
+> * $root$/classes
+> * $root$/solvers
 
-* Various functions useful in the fields of optimization and control.
+## Usage and documentation
+
+There is no thorough documentation for the toolbox, since it is a collection of lots of loosely related functions and classes.
+You can find specific documentation for each function and class using Matlab's `help`.
+
+## Contributing
+
+All contributions are welcome. Please report any issues or bugs in the [Github issue tracker](https://github.com/GepocUS/GepocToolbox/issues).
 
 ## Licence
 
@@ -18,5 +27,5 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LIC
 
 ## Notice
 
-This repository is still in early stages of development. As such, it may be subject to significant changes in the upcoming months.
+This repository is still in very early stages of development. As such, it may be subject to significant changes in the upcoming months and there is no guarantee that the functions and classes that it contains work correctly.
 
