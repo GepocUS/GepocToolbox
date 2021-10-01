@@ -2,7 +2,7 @@
 
 Welcome to GepocToolbox, a Matlab toolbox that contains an assortment of classes and function useful for those working in the fields of optimization and predictive control.
 
-GepocToolbox is developed and maintained by the [GEPOC](grupos.us.es/gepoc/) research team at the University of Seville.
+GepocToolbox is developed and maintained by the [GEPOC](https://grupo.us.es/gepoc/) research team at the University of Seville.
 
 ## Installation
 
@@ -23,7 +23,7 @@ All contributions are welcome. Please report any issues or bugs in the [Github i
 
 ## Licence
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Notice
 
