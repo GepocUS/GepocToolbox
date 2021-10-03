@@ -13,6 +13,7 @@ Alternatively, you can manually add the following folders to Matlab's path.
 
 > * $root$
 > * $root$/classes
+> * $root$/functions
 > * $root$/solvers
 
 To uninstall simply execute `gepoc('uninstall')` in the command window. You can also manually remove the above folders from Matlab's path.

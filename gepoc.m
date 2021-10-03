@@ -39,7 +39,7 @@ switch varargin{1}
     % 
     case 'version'
         
-        varargout{1} = 'v0.0.1';
+        varargout{1} = 'v0.0.0';
         
         % If git is installed it will return the hash of the current commit
         try
@@ -63,6 +63,7 @@ switch varargin{1}
         root_path = gt_get_root_directory();
         addpath(root_path);
         addpath([root_path '/classes/']);
+        addpath([root_path '/functions/']);
         addpath([root_path '/solvers/']);
         savepath
     
@@ -76,6 +77,7 @@ switch varargin{1}
         warning('off','MATLAB:rmpath:DirNotFound')
         rmpath(root_path);
         rmpath([root_path '/classes/']);
+        rmpath([root_path '/functions/']);
         rmpath([root_path '/solvers/']);
         warning('on','MATLAB:rmpath:DirNotFound')
         savepath
