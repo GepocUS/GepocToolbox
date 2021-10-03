@@ -35,14 +35,6 @@
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% Creation: 2020/04/29
-% Last update: 2020/04/29
-% 
-% Changelog: 
-%   v0.1 (2020/04/29): Initial commit version. Only basic attributes and methods included.
-%
-
 classdef QP
     %% PROPERTIES
     properties

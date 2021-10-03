@@ -12,16 +12,6 @@
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% Creation: 2020/05/07
-% Last update: 2020/09/04
-% 
-% Changelog: 
-%   v0.1 (2020/05/07): Initial commit version
-%   v0.1 (2020/09/04): Added documentation
-%   v0.2 (2020/09/14): Added constraints C z <= d for bounds on C x + D u
-%
-
 classdef LaxMPC < ssMPC
     
     %% PROPERTIES

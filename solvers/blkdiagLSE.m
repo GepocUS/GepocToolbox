@@ -33,13 +33,6 @@
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% Creation: 2020/09/20
-% 
-% Changelog: 
-%   v0.1 (2020/09/20): Initial commit version
-%
-
 function z = blkdiagLSE(varargin)
     %% Default values
     def_is_inverted = false;

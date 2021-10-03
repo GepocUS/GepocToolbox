@@ -43,14 +43,6 @@
 % This function is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% Creation: 2020/09/16
-% Last update: 2020/09/16
-% 
-% Changelog: 
-%   v0.1 (2020/09/16): Initial commit version
-%
-
 function [z_opt, f_opt, e_flag, Hist] = FISTA(g_eval, R, varargin)
     timer_total = tic;
 

@@ -3,23 +3,14 @@
 %
 % A detailed description of the MPCT formulation can be found in:
 % A. Ferramosca, D. Limon, I. Alvarado, T. Alamo, and E. Camacho,
-% “MPC for tracking with optimal closed-loop performance,” Automatica,
-% vol. 45, no. 8, pp. 1975–1978, 2009.
+% "MPC for tracking with optimal closed-loop performance", Automatica,
+% vol. 45, no. 8, pp. 1975ï¿½1978, 2009.
 %
 % Properties
 %   - T, S: Cost function matrices for the artificial reference
 %
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
-
-% Author: Pablo Krupa (pkrupa@us.es)
-% Creation: 2020/05/05
-% Last update: 2020/09/04
-% 
-% Changelog: 
-%   v0.1 (2020/05/05): Initial commit version
-%   v0.1 (2020/09/04): Added documentation
-%
 
 classdef TrackingMPC < ssMPC
     

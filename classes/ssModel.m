@@ -91,15 +91,6 @@
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% Creation: 2020/04/29
-% Last update: 2020/04/29
-% 
-% Changelog: 
-%   v0.1 (2020/04/29): Initial commit version.
-%   v0.1 (2020/09/14): Fixed bug: LBy and UBy not  setting to Inf when changing the yc output channel.
-%
-
 classdef ssModel < ss
     %% PROPERTIES
     properties

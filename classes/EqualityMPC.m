@@ -9,14 +9,6 @@
 % This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% Creation: 2020/05/03
-% Last update: 2020/05/03
-% 
-% Changelog: 
-%   v0.1 (2020/05/03): Initial commit version
-%
-
 classdef EqualityMPC < ssMPC
     
     methods
