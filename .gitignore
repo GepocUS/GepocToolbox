@@ -2,8 +2,4 @@
 *.swp
 *.pdf
 *.asv
-/old/*
-/Tests/*
-/Personal/*
-/Documentation/*
-TODO.txt
+/personal/*
