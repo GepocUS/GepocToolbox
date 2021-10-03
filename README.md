@@ -6,11 +6,16 @@ GepocToolbox is developed and maintained by the [GEPOC](https://grupo.us.es/gepo
 
 ## Installation
 
-Clone or download the contents of the repository to a directory of your choice, which we will call `$root$` in this explanation. Then, add the following folders to Matlab's path.
+Clone or download the contents of the repository to a directory of your choice, which we will call `$root$` in this explanation. Then move Matlab's current folder to `$root$` and execute `gepoc('install')` in the command window.
+
+
+Alternatively, you can manually add the following folders to Matlab's path.
 
 > * $root$
 > * $root$/classes
 > * $root$/solvers
+
+To uninstall simply execute `gepoc('uninstall')` in the command window. You can also manually remove the above folders from Matlab's path.
 
 ## Usage and documentation
 
