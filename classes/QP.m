@@ -331,7 +331,7 @@ classdef QP
     
     function self = set.q(self, value)
         % Update the value of q
-        if size(value,2)>1; value=p.value'; end % Make f a column vector
+        if size(value,2)>1; value=value'; end % Make f a column vector
         self.q = value;
         if ~self.startup
             isConsistent(self, 1);

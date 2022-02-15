@@ -294,7 +294,7 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
                 fprintf('\tWARNING: Algorithm FISTA_simpleQP did not converge within the allowed number of iterations %d\n', k_max);
             end
             fprintf('\tFISTA_simpleQP exit flag is %d', e_flag);
-            fprintf('\tElapsed time between start and end of algorithm: %fs\n', Hist.time.total);
+%             fprintf('\tElapsed time between start and end of algorithm: %fs\n', Hist.time.total);
         end
     else      
         if verbose >=2

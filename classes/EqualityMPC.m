@@ -138,7 +138,7 @@ classdef EqualityMPC < ssMPC
                 j = j+1;
                 Az(i:i+nx-1,((j-1)*(nx+nu)+(nu+nx+1)):((j-1)*(nx+nu)+(nx+nu+1)+nx-1)) = -eye(nx);
             end
-            Az = [model.Bu -eye(nx) zeros(nx, size(Az, 2) - nx); zeros(size(Az, 1), nu) Az]; % Initial condition
+            Az = [B -eye(nx) zeros(nx, size(Az, 2) - nx); zeros(size(Az, 1), nu) Az]; % Initial condition
             Az = Az(:,1:end-nx);
             b = zeros(N*nx, 1);
         end
