@@ -72,6 +72,7 @@ The toolbox is structured in different folders, each containing functions and cl
 - `/classes`: All classes should be contained here.
 - `/functions`: All general-purpose functions should be included here.
 - `/solvers`: Optimization solvers should be included here.
+- `/benchmarks`: Functions for generating system models and benchmarks go here.
 
 If justified, additional folders and subfolders can be created.
 

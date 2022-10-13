@@ -65,7 +65,9 @@ switch varargin{1}
         addpath([root_path '/classes/']);
         addpath([root_path '/functions/']);
         addpath([root_path '/solvers/']);
+        addpath([root_path '/benchmarks/']);
         savepath
+        disp('GepoxToolbox installed');
     
     % gepoc('uninstall')
     %
@@ -79,8 +81,10 @@ switch varargin{1}
         rmpath([root_path '/classes/']);
         rmpath([root_path '/functions/']);
         rmpath([root_path '/solvers/']);
+        rmpath([root_path '/benchmarks/']);
         warning('on','MATLAB:rmpath:DirNotFound')
         savepath
+        disp('GepoxToolbox uninstalled');
     
     % Command not recognized
     otherwise
