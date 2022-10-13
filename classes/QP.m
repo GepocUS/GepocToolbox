@@ -172,7 +172,7 @@ classdef QP
                     Hist.k = output.iterations; % Number of iterations
                     
                 elseif strcmp(self.solver, 'FISTA_simpleQP')
-                    [z, f, exit_flag, Hist] = FISTA_simpleQP(self, vars{:});
+                    [z, f, exit_flag, Hist] = FISTA_simpleQP(self.H, self.q, self.A, self.b, self.LB, self.UB, vars{:});
                 
                 % Solver not available
                 else

@@ -36,7 +36,7 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
     def_lambda0 = []; % Set default value of the dual variables to 0 by setting this to empty
     def_LSE_solver = []; % Default solver for the Linear System of Equations
     def_k_min = 0; % Default value for the minimum number of iterations
-    def_k_max = 2000; % Default value for the maximum number of iterations
+    def_k_max = 5000; % Default value for the maximum number of iterations
     def_tol = 1e-4; % Default value of the exit tolerance
     def_useSparse = false; % Default value of use_sparse. Determines if matrices are created as sparse
     def_genHist = 0; % Default amout of data generated and returned in Hist
@@ -84,7 +84,7 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
     % Option 2: FISTA_simpleQP(H, q, A, b, LB, UB)
     else
         % Parse
-        parse(varargin{:});
+        parse(par, varargin{:});
         % Rename main variables
         H = par.Results.H;
         q = par.Results.q;
@@ -212,7 +212,7 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA_simpleQP(varargin)
         lambda = mu + (tk1 - 1)*(mu - mu_1)/tk;
         
         % Compute exit condition
-        norm_res = norm(res, 2);
+        norm_res = norm(res, Inf);
         if (norm_res <= tol) && (k >= k_min)
             done = true;
             e_flag = 1;
