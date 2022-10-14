@@ -66,6 +66,9 @@ switch varargin{1}
         addpath([root_path '/functions/']);
         addpath([root_path '/solvers/']);
         addpath([root_path '/benchmarks/']);
+        warning('off','MATLAB:rmpath:DirNotFound')
+        addpath([root_path '/personal/']);
+        warning('on','MATLAB:rmpath:DirNotFound')
         savepath
         disp('GepoxToolbox installed');
     
