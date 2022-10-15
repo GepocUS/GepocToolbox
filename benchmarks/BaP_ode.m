@@ -22,7 +22,7 @@
 % OUTPUTS:
 %   - dx: Time derivative of the system state.
 %
-% See also: BaP_gen_ss, BaP_bechmark
+% See also: BaP_gen_ss, BaP_benchmark
 %
 % This function is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 

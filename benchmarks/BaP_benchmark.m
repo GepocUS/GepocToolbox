@@ -6,7 +6,7 @@
 % "Harmonic based model predictive control for set-point tracking",
 % P. Krupa, D. Limon and T. Alamo, in Transactions on Automatic control, 2021.
 %
-% The continuous-time model of the system is obtained using gen_sys_BaP.m
+% The continuous-time model of the system is obtained using BaP_gen_ss()
 %
 % The state of the system is given by:
 %   x = (p_1, dp_1, teta_1, dteta_1, p_2, dp_2, teta_2, dteta_2)
@@ -49,7 +49,7 @@ function sysBaP = BaP_benchmark()
     uOpPoint = zeros(2, 1);
 
     %% Generate continuous-time model
-    sysC = gen_sys_BaP(param_sys);
+    sysC = BaP_gen_ss(param_sys);
 
     %% Generate ssModel
     Ts = 0.2; % Sampling time

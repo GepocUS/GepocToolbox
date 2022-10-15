@@ -16,7 +16,7 @@
 % OUTPUTS:
 %   - sys: Instance of the ss class. Continuous-time state space model.
 %
-% See also: BaP_ode, BaP_bechmark
+% See also: BaP_ode, BaP_benchmark
 % 
 % This function is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
