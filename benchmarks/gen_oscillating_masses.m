@@ -19,12 +19,11 @@
 %        acting on it.
 %
 % OUTPUTS:
-%   - sys: Continuous-time state space model of the system
+%   - sys: Instance of the ss class. Continuous-time state space model.
 % 
 % For an example of a system of this kind see:
 %   M. Kögel, R. Findeisen, "A fast gradient method for embedded
 %   linear predictive control", in IFAC World Congress, 2011.
-% 
 % 
 % This function is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
