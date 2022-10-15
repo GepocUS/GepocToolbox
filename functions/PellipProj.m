@@ -6,6 +6,15 @@
 %      s.t.  (x - c)'*P*(x - c) <= r^2
 %
 % for the given z, P, c and r. It is assumed that r > 0.
+% 
+% INPUTS:
+%   - z: Vector to be projected onto the ellipsoid
+%   - P: Positive definite matrix defining the geometry of the ellipsoid
+%   - c: Vector defining the center of the ellipsoid
+%   - r: scalar defining the size of the ellipsoid
+%
+% OUTPUTS:
+%   - v: P-weignted projection onto the ellipsoid of geometry P
 %
 % This function is part of GepocToolbox: https://github.com/GepocUS/GepocToolbox
 %
