@@ -1,7 +1,8 @@
-%% gen_sys_BaP - Generate continuous-time model of the ball and plate system
+%% BaP_gen_ss - Generate continuous-time model of the ball and plate system
 %
 % This function generates the continuous-time state space model
 % of the ball and plate system described in:
+% 
 % "Harmonic based model predictive control for set-point tracking", P. Krupa,
 % D. Limon and T. Alamo, in Transactions on Automatic control, 2021.
 %
@@ -14,11 +15,13 @@
 % 
 % OUTPUTS:
 %   - sys: Instance of the ss class. Continuous-time state space model.
+%
+% See also: BaP_ode, BaP_bechmark
 % 
 % This function is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
-function sys = gen_sys_BaP(param)
+function sys = BaP_gen_ss(param)
 
     % Compute the variable that relates the parameters of te system with the dynamics
     M = param.m/(param.m + param.I/param.r^2);
