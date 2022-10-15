@@ -1,4 +1,4 @@
-%% gen_oscillating_masses - Generate syste of oscillating masses
+%% OscMass_gen_ss - Generate continuous-time model of the oscillating masse system
 % 
 % This function generates the continuous-time state space model
 % of p consecutive masses connected by springs. The state of the
@@ -25,15 +25,10 @@
 %   M. Kögel, R. Findeisen, "A fast gradient method for embedded
 %   linear predictive control", in IFAC World Congress, 2011.
 % 
+% See also: OscMass_benchmark
+% 
 % This function is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
-
-% Basic configuration is:
-% p = 3; % Number of objects
-% M = [1; 0.5*ones(p-2, 1); 1]; % Outer objects have more mass
-% K = 2*ones(p+1, 1); % Same K for all springs
-% F = [1; zeros(p-2, 1); 1]; % External force only on outer objects
-% sys = gen_oscillating_masses(M, K, F);
 
 function sys = gen_oscillating_masses(M, K, F)
     
