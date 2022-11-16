@@ -1,5 +1,25 @@
 %% A class for creating nice-looking figures
-% TODO: add documentation
+% 
+% Constructor optional arguments
+%   - clear_fig: boolean (true). Does clf() on the figure
+%   - title: string. Title of the figure
+%   - x_label: string. x_label of the figure
+%   - y_label: string. y_label of the figure
+%   - interpreter: string ('latex'). Interpreter used for writing text
+%   - bg_color: string ('w'). Figure background color
+%   - grig: bool (true). If true it sets the grid to on
+%   - minor_grid: bool (false). If true it sets the minor grid to on
+%   - hold: bool (true). It true it sets hold to on
+%   - line_width: scalar (1.5). Sets the default line_width for plots
+%   - font_size: scalar (20). Sets the default font size for text
+%
+% Properties
+%   - All the contructor optional arguments are saved into 
+%     properties with the same name except for: clear_fig
+%   - num: Stores the number of the figure
+%   - fh: Handler to the figure
+%   - ax: Handler for the axis object of the figure
+%   - ph: Cell containing the handlers to each of the plots
 
 classdef Fig < handle
     
@@ -20,7 +40,7 @@ classdef Fig < handle
     properties (Hidden = true)
         fh % Figure handler
         ax % Axis handler
-        ph % List of plott handlers
+        ph % List of plot handlers
         interpreter {ischar} = 'latex' % Interpreter used to print text
     end
     
