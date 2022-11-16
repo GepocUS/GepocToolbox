@@ -3,17 +3,17 @@
 % Constructor optional arguments
 %   - clear_fig: boolean (true). Does clf() on the figure
 %   - title: string. Title of the figure
-%   - x_label: string. x_label of the figure
-%   - y_label: string. y_label of the figure
+%   - xlabel: string. xlabel of the figure
+%   - ylabel: string. ylabel of the figure
 %   - interpreter: string ('latex'). Interpreter used for writing text
 %   - bg_color: string ('w'). Figure background color
 %   - grig: bool (true). If true it sets the grid to on
-%   - minor_grid: bool (false). If true it sets the minor grid to on
+%   - minorgrid: bool (false). If true it sets the minor grid to on
 %   - hold: bool (true). It true it sets hold to on
-%   - line_width: scalar (1.5). Sets the default linewidth for the plots
-%   - marker_size: scalar (4). Sets the default markersize for the plots
-%   - font_size: scalar (20). Sets the default font size for text
-%   - color_scheme: string ("lines"). Determines the color scheme of the plots
+%   - linewidth: scalar (1.5). Sets the default linewidth for the plots
+%   - markersize: scalar (4). Sets the default markersize for the plots
+%   - fontsize: scalar (20). Sets the default font size for text
+%   - colorscheme: string ("lines"). Determines the color scheme of the plots
 %   - max_num_colors: integer (8). Determines the number of different colors
 %
 % Properties
@@ -28,16 +28,16 @@ classdef Fig < handle
     
     properties
         title {ischar} % Title of the figure
-        x_label {ischar} = "" % Label of the X-axis
-        y_label {ischar} = "" % Label of the Y-axis
+        xlabel {ischar} = "" % Label of the X-axis
+        ylabel {ischar} = "" % Label of the Y-axis
         bg_color % Background color
         grid {mustBeInteger, mustBeGreaterThanOrEqual(grid,0), mustBeLessThanOrEqual(grid,1)} % Sets grid to 'on' or 'off'
         hold {mustBeInteger, mustBeGreaterThanOrEqual(hold,0), mustBeLessThanOrEqual(hold,1)} % Sets hold to 'on' or 'off'
-        minor_grid {mustBeInteger, mustBeGreaterThanOrEqual(minor_grid,0), mustBeLessThanOrEqual(minor_grid,1)} % Sets minor grid 'on' or 'off'
-        line_width {mustBeReal, mustBePositive} % Line width for new plot lines
-        marker_size {mustBeReal, mustBePositive} % Marker size for new plot lines
-        font_size {mustBeReal, mustBePositive} % Font size of the main text elements
-        color_scheme {ischar} = "lines"
+        minorgrid {mustBeInteger, mustBeGreaterThanOrEqual(minorgrid,0), mustBeLessThanOrEqual(minorgrid,1)} % Sets minor grid 'on' or 'off'
+        linewidth {mustBeReal, mustBePositive} % Line width for new plot lines
+        markersize {mustBeReal, mustBePositive} % Marker size for new plot lines
+        fontsize {mustBeReal, mustBePositive} % Font size of the main text elements
+        colorscheme {ischar} = "lines"
     end
     properties(SetAccess=protected, GetAccess=public)
        num % Stores the figure number
@@ -70,18 +70,18 @@ classdef Fig < handle
         def_fig_num = [];
         def_clear_fig = true;
         def_title = "";
-        def_x_label = "";
-        def_y_label = "";
+        def_xlabel = "";
+        def_ylabel = "";
         def_interpreter = 'latex';
         def_bg_color = 'w';
         def_grid = true;
         def_hold = true;
-        def_minor_grid = false;
-        def_line_width = 1.5;
-        def_marker_size = 4;
-        def_font_size = 20;
+        def_minorgrid = false;
+        def_linewidth = 1.5;
+        def_markersize = 4;
+        def_fontsize = 20;
         def_max_num_colors = 8;
-        def_color_scheme = "lines";
+        def_colorscheme = "lines";
         
         % Parser
         par = inputParser;
@@ -93,18 +93,18 @@ classdef Fig < handle
         % Name-value parameters
         addParameter(par, 'clear_fig', def_clear_fig, @(x) islogical(x) || x==1 || x==0);
         addParameter(par, 'title', def_title, @(x) ischar(x));
-        addParameter(par, 'x_label', def_x_label, @(x) ischar(x));
-        addParameter(par, 'y_label', def_y_label, @(x) ischar(x));
+        addParameter(par, 'xlabel', def_xlabel, @(x) ischar(x));
+        addParameter(par, 'ylabel', def_ylabel, @(x) ischar(x));
         addParameter(par, 'interpreter', def_interpreter, @(x) ischar(x));
         addParameter(par, 'bg_color', def_bg_color, @(x) ischar(x) || isnumeric(x));
         addParameter(par, 'grid', def_grid, @(x) islogical(x) || x==1 || x==0);
         addParameter(par, 'hold', def_hold, @(x) islogical(x) || x==1 || x==0);
-        addParameter(par, 'minor_grid', def_minor_grid, @(x) islogical(x) || x==1 || x==0);
-        addParameter(par, 'line_width', def_line_width, @(x) isnumeric(x) && (x>0));
-        addParameter(par, 'marker_size', def_marker_size, @(x) isnumeric(x) && (x>0));
-        addParameter(par, 'font_size', def_font_size, @(x) isnumeric(x) && (x>0) && x==floor(x));
+        addParameter(par, 'minorgrid', def_minorgrid, @(x) islogical(x) || x==1 || x==0);
+        addParameter(par, 'linewidth', def_linewidth, @(x) isnumeric(x) && (x>0));
+        addParameter(par, 'markersize', def_markersize, @(x) isnumeric(x) && (x>0));
+        addParameter(par, 'fontsize', def_fontsize, @(x) isnumeric(x) && (x>0) && x==floor(x));
         addParameter(par, 'max_num_colors', def_max_num_colors, @(x) mod(x,1)==0 && (x>0));
-        addParameter(par, 'color_scheme', def_color_scheme, @(x) ischar(x));
+        addParameter(par, 'colorscheme', def_colorscheme, @(x) ischar(x));
 
         % Parse
         parse(par, varargin{:})
@@ -126,16 +126,16 @@ classdef Fig < handle
         self.hold = par.Results.hold;
         self.interpreter = par.Results.interpreter;
         self.title = par.Results.title;
-        self.x_label = par.Results.x_label;
-        self.y_label = par.Results.y_label;
+        self.xlabel = par.Results.xlabel;
+        self.ylabel = par.Results.ylabel;
         self.bg_color = par.Results.bg_color;
         self.grid = par.Results.grid;
-        self.minor_grid = par.Results.minor_grid;
-        self.line_width = par.Results.line_width;
-        self.marker_size = par.Results.marker_size;
-        self.font_size = par.Results.font_size;
+        self.minorgrid = par.Results.minorgrid;
+        self.linewidth = par.Results.linewidth;
+        self.markersize = par.Results.markersize;
+        self.fontsize = par.Results.fontsize;
         self.max_num_colors = par.Results.max_num_colors;
-        self.color_scheme = par.Results.color_scheme;
+        self.colorscheme = par.Results.colorscheme;
         self.ph = cell(0);
         
     end
@@ -153,16 +153,16 @@ classdef Fig < handle
         end
     end
     
-    function set.x_label(self, value)
+    function set.xlabel(self, value)
         if ~isempty(value)
-            self.x_label = value;
+            self.xlabel = value;
             set(self.ax.XLabel, 'String', value);
         end
     end
     
-    function set.y_label(self, value)
+    function set.ylabel(self, value)
         if ~isempty(value)
-            self.y_label = value;
+            self.ylabel = value;
             set(self.ax.YLabel, 'String', value);
         end
     end
@@ -175,17 +175,17 @@ classdef Fig < handle
         set(self.ax.YLabel, 'Interpreter', value);
     end
     
-    function set.line_width(self, value)
+    function set.linewidth(self, value)
         if ~isempty(value)
-            self.line_width = value;
+            self.linewidth = value;
             set(self.fh, 'DefaultLineLineWidth', value);
-            self.update_plots_line_width(value); % Update the line width of all plots
+            self.update_plots_linewidth(value); % Update the line width of all plots
         end
     end
     
-    function set.font_size(self, value)
+    function set.fontsize(self, value)
         if ~isempty(value)
-            self.font_size = value;
+            self.fontsize = value;
             set(self.ax, 'FontSize', value);
         end
     end
@@ -217,8 +217,8 @@ classdef Fig < handle
         end
     end
     
-    function set.minor_grid(self, value)
-        self.minor_grid = value;
+    function set.minorgrid(self, value)
+        self.minorgrid = value;
         if value == true
             set(self.ax, 'XMinorGrid', 'on');
             set(self.ax, 'YMinorGrid', 'on');
@@ -228,10 +228,10 @@ classdef Fig < handle
         end
     end
 
-    function set.color_scheme(self, value)
+    function set.colorscheme(self, value)
         color_func = [value + "(self.max_num_colors)"];
         newColors = eval(color_func);
-        self.color_scheme = value;
+        self.colorscheme = value;
         self.ax.ColorOrder = newColors;
         self.update_plots_color(); % Update the color of all plots
     end
@@ -299,15 +299,15 @@ classdef Fig < handle
 
         % Default values
         def_mods = '';
-        def_linewidth = self.line_width;
-        def_markersize = self.marker_size;
+        def_linewidth = self.linewidth;
+        def_markersize = self.markersize;
         def_linesyle = '-';
         def_marker = 'none';
         
         def_color = self.ax.ColorOrder(mod(length(self.ph), self.max_num_colors) + 1, :);
         % Parser
         par = inputParser;
-        par.CaseSensitive = true;
+        par.CaseSensitive = false;
         par.FunctionName = 'Fig::plot';
         % Required
         addRequired(par, 'x');
@@ -315,11 +315,11 @@ classdef Fig < handle
         % Optional
         addOptional(par, 'mods', def_mods, @(x) ischar(x));
         % Name-value parameters
-        addParameter(par, 'LineStyle', def_linesyle, @(x) ischar(x));
-        addParameter(par, 'Marker', def_marker, @(x) ischar(x));
+        addParameter(par, 'linestyle', def_linesyle, @(x) ischar(x));
+        addParameter(par, 'marker', def_marker, @(x) ischar(x));
         addParameter(par, 'linewidth', def_linewidth, @(x) isnumeric(x) && (x>0));
         addParameter(par, 'markersize', def_markersize, @(x) isnumeric(x) && (x>0));
-        addParameter(par, 'Color', def_color);
+        addParameter(par, 'color', def_color);
         % Parse
         if mod(length(varargin), 2)==0
             parse(par, varargin{1}, varargin{2}, def_mods, varargin{3:end});
@@ -330,11 +330,11 @@ classdef Fig < handle
         x = par.Results.x;
         y = par.Results.y;
         mods = par.Results.mods;
-        linestyle = par.Results.LineStyle;
-        marker = par.Results.Marker;
+        linestyle = par.Results.linestyle;
+        marker = par.Results.marker;
         linewidth = par.Results.linewidth;
         markersize = par.Results.markersize;
-        color = par.Results.Color;
+        color = par.Results.color;
 
         % Use marker from mods is available
         idx_mods_marker = regexp(mods ,'[.ox+*sdv^<>ph]');
@@ -357,9 +357,11 @@ classdef Fig < handle
         end
 
         self.focus();
-        self.ph{end+1} = plot(self.ax, x, y, mods, 'Color', color,...
-                              'linewidth', linewidth, 'markersize', markersize,...
-                              'Marker', marker, 'LineStyle', linestyle);
+        self.ph{end+1} = plot(self.ax, x, y, mods,...
+                              'Color', color,...
+                              'linewidth', linewidth, 'LineStyle', linestyle,...
+                              'markersize', markersize, 'Marker', marker...
+                              );
 
     end
     
@@ -369,7 +371,7 @@ classdef Fig < handle
 
     methods (Access = protected)
 
-    function update_plots_line_width(self, value)
+    function update_plots_linewidth(self, value)
         for i = 1:length(self.ph)
             self.ph{i}.LineWidth = value;
         end
@@ -390,10 +392,34 @@ classdef Fig < handle
                 color = self.color_red;
             case 'r'
                 color = self.color_red;
+            case 'green'
+                color = self.color_green;
+            case 'g'
+                color = self.color_green;
             case 'blue'
                 color = self.color_blue;
             case 'b'
                 color = self.color_blue;
+            case 'cyan'
+                color = self.color_cyan;
+            case 'c'
+                color = self.color_cyan;
+            case 'magenta'
+                color = self.color_magenta;
+            case 'm'
+                color = self.color_magenta;
+            case 'yellow'
+                color = self.color_yellow;
+            case 'y'
+                color = self.color_yellow;
+            case 'black'
+                color = self.color_black;
+            case 'k'
+                color = self.color_black;
+            case 'white'
+                color = self.color_white;
+            case 'w'
+                color = self.color_white;
         end
 
     end
