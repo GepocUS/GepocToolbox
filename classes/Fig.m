@@ -45,6 +45,7 @@ classdef Fig < handle
     end
     
     methods
+
     %% CONSTRUCTOR
     
     function self = Fig(varargin)
@@ -152,7 +153,7 @@ classdef Fig < handle
         if ~isempty(value)
             self.line_width = value;
             set(self.fh, 'DefaultLineLineWidth', value);
-            % TODO: modify line_width of all plots (use the ph property)
+            self.update_all_line_widths(value); % Update the line width of all plots
         end
     end
     
@@ -201,7 +202,7 @@ classdef Fig < handle
         end
     end
     
-    %% METHODS
+    %% PUBLIC METHODS
     
     function focus(self)
         % Fig.focus() - Focuses the figure
@@ -266,7 +267,18 @@ classdef Fig < handle
         self.ph{end+1} = plot(varargin{:}, 'linewidth', self.line_width, 'markersize', 4);
     end
     
-    
+    end % End public methods
+
+    %% PROTECTED METHODS
+
+    methods (Access = protected)
+
+    function update_all_line_widths(self, value)
+        for i = 1:length(self.ph)
+            self.ph{i}.LineWidth = value;
+        end
+    end
+
     end
     
 end
