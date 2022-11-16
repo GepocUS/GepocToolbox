@@ -10,7 +10,8 @@
 %   - grig: bool (true). If true it sets the grid to on
 %   - minor_grid: bool (false). If true it sets the minor grid to on
 %   - hold: bool (true). It true it sets hold to on
-%   - line_width: scalar (1.5). Sets the default line_width for plots
+%   - line_width: scalar (1.5). Sets the default linewidth for the plots
+%   - marker_size: scalar (4). Sets the default markersize for the plots
 %   - font_size: scalar (20). Sets the default font size for text
 %   - color_scheme: string ("lines"). Determines the color scheme of the plots
 %   - max_num_colors: integer (8). Determines the number of different colors
@@ -34,6 +35,7 @@ classdef Fig < handle
         hold {mustBeInteger, mustBeGreaterThanOrEqual(hold,0), mustBeLessThanOrEqual(hold,1)} % Sets hold to 'on' or 'off'
         minor_grid {mustBeInteger, mustBeGreaterThanOrEqual(minor_grid,0), mustBeLessThanOrEqual(minor_grid,1)} % Sets minor grid 'on' or 'off'
         line_width {mustBeReal, mustBePositive} % Line width for new plot lines
+        marker_size {mustBeReal, mustBePositive} % Marker size for new plot lines
         font_size {mustBeReal, mustBePositive} % Font size of the main text elements
         color_scheme {ischar} = "lines"
     end
@@ -46,6 +48,16 @@ classdef Fig < handle
         ph % List of plot handlers
         max_num_colors {mustBeInteger, mustBeGreaterThanOrEqual(max_num_colors,0)} = 8
         interpreter {ischar} = 'latex' % Interpreter used to print text
+    end
+    properties (Hidden = true, SetAccess=protected, GetAccess=protected)
+        color_red = [1 0 0];
+        color_green = [0 1 0];
+        color_blue = [0 0 1];
+        color_cyan = [0 1 1];
+        color_magenta = [1 0 1];
+        color_yellow = [1 1 0];
+        color_black = [0 0 0];
+        color_white = [1 1 1];
     end
     
     methods
@@ -66,6 +78,7 @@ classdef Fig < handle
         def_hold = true;
         def_minor_grid = false;
         def_line_width = 1.5;
+        def_marker_size = 4;
         def_font_size = 20;
         def_max_num_colors = 8;
         def_color_scheme = "lines";
@@ -88,6 +101,7 @@ classdef Fig < handle
         addParameter(par, 'hold', def_hold, @(x) islogical(x) || x==1 || x==0);
         addParameter(par, 'minor_grid', def_minor_grid, @(x) islogical(x) || x==1 || x==0);
         addParameter(par, 'line_width', def_line_width, @(x) isnumeric(x) && (x>0));
+        addParameter(par, 'marker_size', def_marker_size, @(x) isnumeric(x) && (x>0));
         addParameter(par, 'font_size', def_font_size, @(x) isnumeric(x) && (x>0) && x==floor(x));
         addParameter(par, 'max_num_colors', def_max_num_colors, @(x) mod(x,1)==0 && (x>0));
         addParameter(par, 'color_scheme', def_color_scheme, @(x) ischar(x));
@@ -118,6 +132,7 @@ classdef Fig < handle
         self.grid = par.Results.grid;
         self.minor_grid = par.Results.minor_grid;
         self.line_width = par.Results.line_width;
+        self.marker_size = par.Results.marker_size;
         self.font_size = par.Results.font_size;
         self.max_num_colors = par.Results.max_num_colors;
         self.color_scheme = par.Results.color_scheme;
@@ -281,18 +296,71 @@ classdef Fig < handle
     
     function plot(self, varargin)
         % Overload of the standard plot() function
-        % TODO: work on default values, etc.
-        % TODO: seamless integration of markers
 
         % Default values
+        def_mods = '';
         def_linewidth = self.line_width;
-        def_markersize = 4;
-        def_color = [];
+        def_markersize = self.marker_size;
+        def_linesyle = '-';
+        def_marker = 'none';
         
+        def_color = self.ax.ColorOrder(mod(length(self.ph), self.max_num_colors) + 1, :);
+        % Parser
+        par = inputParser;
+        par.CaseSensitive = true;
+        par.FunctionName = 'Fig::plot';
+        % Required
+        addRequired(par, 'x');
+        addRequired(par, 'y');
+        % Optional
+        addOptional(par, 'mods', def_mods, @(x) ischar(x));
+        % Name-value parameters
+        addParameter(par, 'LineStyle', def_linesyle, @(x) ischar(x));
+        addParameter(par, 'Marker', def_marker, @(x) ischar(x));
+        addParameter(par, 'linewidth', def_linewidth, @(x) isnumeric(x) && (x>0));
+        addParameter(par, 'markersize', def_markersize, @(x) isnumeric(x) && (x>0));
+        addParameter(par, 'Color', def_color);
+        % Parse
+        if mod(length(varargin), 2)==0
+            parse(par, varargin{1}, varargin{2}, def_mods, varargin{3:end});
+        else
+            parse(par, varargin{:});
+        end
+        % Rename
+        x = par.Results.x;
+        y = par.Results.y;
+        mods = par.Results.mods;
+        linestyle = par.Results.LineStyle;
+        marker = par.Results.Marker;
+        linewidth = par.Results.linewidth;
+        markersize = par.Results.markersize;
+        color = par.Results.Color;
 
+        % Use marker from mods is available
+        idx_mods_marker = regexp(mods ,'[.ox+*sdv^<>ph]');
+        if ~isempty(idx_mods_marker)
+            marker = mods(idx_mods_marker);
+            linestyle = 'none';
+        end
+
+        % Use color from mods if available
+        idx_mods_color = regexp(mods ,'[rgbcmykw]');
+        if ~isempty(idx_mods_color)
+            color = self.get_basic_color(mods(idx_mods_color));
+        end
+
+        % Use linestyle from mods if available
+        mods_linestyle = erase(mods, mods(idx_mods_marker));
+        mods_linestyle = erase(mods_linestyle, mods(idx_mods_color));
+        if ~isempty(mods_linestyle)
+            linestyle = mods_linestyle;
+        end
 
         self.focus();
-        self.ph{end+1} = plot(self.ax, varargin{:}, 'linewidth', self.line_width, 'markersize', 4);
+        self.ph{end+1} = plot(self.ax, x, y, mods, 'Color', color,...
+                              'linewidth', linewidth, 'markersize', markersize,...
+                              'Marker', marker, 'LineStyle', linestyle);
+
     end
     
     end % End public methods
@@ -311,6 +379,23 @@ classdef Fig < handle
         for i = 1:length(self.ph)
             self.ph{i}.Color = self.ax.ColorOrder(mod(i-1, self.max_num_colors)+1, :);
         end
+    end
+
+    function color = get_basic_color(self, name)
+
+        color = [];
+
+        switch name
+            case 'red'
+                color = self.color_red;
+            case 'r'
+                color = self.color_red;
+            case 'blue'
+                color = self.color_blue;
+            case 'b'
+                color = self.color_blue;
+        end
+
     end
 
     end
