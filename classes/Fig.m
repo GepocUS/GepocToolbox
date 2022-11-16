@@ -12,6 +12,8 @@
 %   - hold: bool (true). It true it sets hold to on
 %   - line_width: scalar (1.5). Sets the default line_width for plots
 %   - font_size: scalar (20). Sets the default font size for text
+%   - color_scheme: string ("lines"). Determines the color scheme of the plots
+%   - max_num_colors: integer (8). Determines the number of different colors
 %
 % Properties
 %   - All the contructor optional arguments are saved into 
@@ -33,6 +35,7 @@ classdef Fig < handle
         minor_grid {mustBeInteger, mustBeGreaterThanOrEqual(minor_grid,0), mustBeLessThanOrEqual(minor_grid,1)} % Sets minor grid 'on' or 'off'
         line_width {mustBeReal, mustBePositive} % Line width for new plot lines
         font_size {mustBeReal, mustBePositive} % Font size of the main text elements
+        color_scheme {ischar} = "lines"
     end
     properties(SetAccess=protected, GetAccess=public)
        num % Stores the figure number
@@ -41,6 +44,7 @@ classdef Fig < handle
         fh % Figure handler
         ax % Axis handler
         ph % List of plot handlers
+        max_num_colors {mustBeInteger, mustBeGreaterThanOrEqual(max_num_colors,0)} = 8
         interpreter {ischar} = 'latex' % Interpreter used to print text
     end
     
@@ -63,6 +67,8 @@ classdef Fig < handle
         def_minor_grid = false;
         def_line_width = 1.5;
         def_font_size = 20;
+        def_max_num_colors = 8;
+        def_color_scheme = "lines";
         
         % Parser
         par = inputParser;
@@ -83,6 +89,9 @@ classdef Fig < handle
         addParameter(par, 'minor_grid', def_minor_grid, @(x) islogical(x) || x==1 || x==0);
         addParameter(par, 'line_width', def_line_width, @(x) isnumeric(x) && (x>0));
         addParameter(par, 'font_size', def_font_size, @(x) isnumeric(x) && (x>0) && x==floor(x));
+        addParameter(par, 'max_num_colors', def_max_num_colors, @(x) mod(x,1)==0 && (x>0));
+        addParameter(par, 'color_scheme', def_color_scheme, @(x) ischar(x));
+
         % Parse
         parse(par, varargin{:})
         % Rename
@@ -110,6 +119,8 @@ classdef Fig < handle
         self.minor_grid = par.Results.minor_grid;
         self.line_width = par.Results.line_width;
         self.font_size = par.Results.font_size;
+        self.max_num_colors = par.Results.max_num_colors;
+        self.color_scheme = par.Results.color_scheme;
         self.ph = cell(0);
         
     end
@@ -153,7 +164,7 @@ classdef Fig < handle
         if ~isempty(value)
             self.line_width = value;
             set(self.fh, 'DefaultLineLineWidth', value);
-            self.update_all_line_widths(value); % Update the line width of all plots
+            self.update_plots_line_width(value); % Update the line width of all plots
         end
     end
     
@@ -201,6 +212,15 @@ classdef Fig < handle
             set(self.ax, 'YMinorGrid', 'off');
         end
     end
+
+    function set.color_scheme(self, value)
+        color_func = [value + "(self.max_num_colors)"];
+        newColors = eval(color_func);
+        self.color_scheme = value;
+        self.ax.ColorOrder = newColors;
+        self.update_plots_color(); % Update the color of all plots
+    end
+
     
     %% PUBLIC METHODS
     
@@ -263,8 +283,16 @@ classdef Fig < handle
         % Overload of the standard plot() function
         % TODO: work on default values, etc.
         % TODO: seamless integration of markers
+
+        % Default values
+        def_linewidth = self.line_width;
+        def_markersize = 4;
+        def_color = [];
+        
+
+
         self.focus();
-        self.ph{end+1} = plot(varargin{:}, 'linewidth', self.line_width, 'markersize', 4);
+        self.ph{end+1} = plot(self.ax, varargin{:}, 'linewidth', self.line_width, 'markersize', 4);
     end
     
     end % End public methods
@@ -273,9 +301,15 @@ classdef Fig < handle
 
     methods (Access = protected)
 
-    function update_all_line_widths(self, value)
+    function update_plots_line_width(self, value)
         for i = 1:length(self.ph)
             self.ph{i}.LineWidth = value;
+        end
+    end
+
+    function update_plots_color(self)
+        for i = 1:length(self.ph)
+            self.ph{i}.Color = self.ax.ColorOrder(mod(i-1, self.max_num_colors)+1, :);
         end
     end
 
