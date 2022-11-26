@@ -332,20 +332,6 @@ classdef Fig < handle
 
     end
 
-    function previous_pos(self)
-        % Fig.previous_pos() - Recover previous axis position
-        % 
-        % Returns the figure axes position to its previous stored value
-        % Functions that update the previous value are:
-        %   Fig.plot(), Fig.trim()
-        %
-        % See also: Fig.plot(), Fig.trim()
-
-        pos_aux = self.ax.Position;
-        self.ax.Position = self.previous_ax_position;
-        self.previous_ax_position = pos_aux;
-    end
-    
     function y_scale(self, value)
         % y_scale() - Switch Y axis scale between 'linear' and 'log'
         % y_scale('log') - Set Y axis scale to 'log'
@@ -456,6 +442,21 @@ classdef Fig < handle
     %% PROTECTED METHODS
 
     methods (Access = protected)
+
+    function previous_pos(self)
+        % Fig.previous_pos() - Recover previous axis position
+        % 
+        % Returns the figure axes position to its previous stored value
+        % Functions that update the previous value are:
+        %   Fig.plot(), Fig.trim()
+        %
+        % See also: Fig.plot(), Fig.trim()
+
+        pos_aux = self.ax.Position;
+        self.ax.Position = self.previous_ax_position;
+        self.previous_ax_position = pos_aux;
+    end
+    
 
     function update_plots_linewidth(self, value)
         for i = 1:length(self.ph)
