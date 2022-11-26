@@ -58,6 +58,7 @@ classdef Fig < handle
         color_yellow = [1 1 0];
         color_black = [0 0 0];
         color_white = [1 1 1];
+        previous_ax_position;
     end
     
     methods
@@ -137,6 +138,7 @@ classdef Fig < handle
         self.max_num_colors = par.Results.max_num_colors;
         self.colorscheme = par.Results.colorscheme;
         self.ph = cell(0);
+        self.previous_ax_position = self.ax.Position;
         
     end
     
@@ -251,16 +253,97 @@ classdef Fig < handle
         clf(self.num);
     end
     
-    function trim(self)
+    function trim(self, varargin)
         % Fig.trim() - Trims the empty space at the edges of the figure
+        % 
         % Useful for making figures with no extra space for inserting them into articles
+        % 
+        % Fig.trim() trims the figure leaving no margin
+        % 
+        % Fig.trim(margin) trims the figure leaving the given margin
+        % 
+        % Fig.trim('margin_name', value) sets the provided margin to the given value
+        % Possible margins are: 'margin' ('m') Same as Fig.trim(margin)
+        %                       'west_margin' ('west', 'w') Left margin
+        %                       'east_margin' ('east', 'e') Right margin 
+        %                       'south_margin' ('south', 's') Bottom margin 
+        %                       'north_margin' ('north', 'n') Top margin 
+        % Specific margins take precedence over the value of 'margin'
+        %
+        % Fig.trim('undo') calls Fig.previous_pos(). Will undo the trim if called before
+        % some other method which updates the plot position (see Fig.previous_pos())
+        %
+        % See also: Fig.previous_pos()
+
+        if nargin == 2 && strcmp(varargin{1}, 'undo')
+
+            self.previous_pos();
+            return;
+
+        elseif nargin == 2 && isnumeric(varargin{1})
+
+            margin = varargin{1};
+            west_margin = margin;
+            east_margin = margin;
+            south_margin = margin;
+            north_margin = margin;
+
+        else
+
+            % Default values
+            def_margin = 0.0;
+            def_west_margin = NaN;
+            def_east_margin = NaN;
+            def_south_margin = NaN;
+            def_north_margin = NaN;
+
+            % Parser
+            par = inputParser;
+            par.CaseSensitive = false;
+            par.FunctionName = 'Fig.trim()';
+            % Name-value parameters
+            addParameter(par, 'margin', def_margin, @(x) isnumeric(x));
+            addParameter(par, 'west_margin', def_west_margin, @(x) isnumeric(x));
+            addParameter(par, 'east_margin', def_east_margin, @(x) isnumeric(x));
+            addParameter(par, 'south_margin', def_south_margin, @(x) isnumeric(x));
+            addParameter(par, 'north_margin', def_north_margin, @(x) isnumeric(x));
+            % Parse
+            parse(par, varargin{:})
+            % Rename and set
+            margin = par.Results.margin;
+            west_margin = margin;
+            east_margin = margin;
+            south_margin = margin;
+            north_margin = margin;
+            if ~isnan(par.Results.west_margin);  west_margin = par.Results.west_margin; end
+            if ~isnan(par.Results.east_margin);  east_margin = par.Results.east_margin; end
+            if ~isnan(par.Results.south_margin); south_margin = par.Results.south_margin; end;
+            if ~isnan(par.Results.north_margin); north_margin = par.Results.north_margin; end;
+
+        end
+
         outerpos = self.ax.OuterPosition;
         ti = self.ax.TightInset; 
-        left = outerpos(1) + ti(1);
-        bottom = outerpos(2) + ti(2);
-        ax_width = outerpos(3) - ti(1) - ti(3);
-        ax_height = outerpos(4) - ti(2) - ti(4);
+        left = outerpos(1) + ti(1) + west_margin;
+        bottom = outerpos(2) + ti(2) + south_margin;
+        ax_width = outerpos(3) - ti(1) - ti(3) - east_margin - west_margin;
+        ax_height = outerpos(4) - ti(2) - ti(4) - north_margin - south_margin;
         self.ax.Position = [left bottom ax_width ax_height];
+
+    end
+
+    function previous_pos(self)
+        % Fig.previous_pos() - Recover previous axis position
+        % 
+        % Returns the figure axes position to its previous stored value
+        % Functions that update the previous value are:
+        %   Fig.plot(), Fig.trim()
+        %
+        % See also: Fig.plot(), Fig.trim()
+
+        pos_aux = self.ax.Position;
+        self.ax.Position = self.previous_ax_position;
+        self.previous_ax_position = pos_aux;
     end
     
     function y_scale(self, value)
@@ -362,6 +445,9 @@ classdef Fig < handle
                               'linewidth', linewidth, 'LineStyle', linestyle,...
                               'markersize', markersize, 'Marker', marker...
                               );
+         
+        % Post plot
+        self.previous_ax_position = self.ax.Position;
 
     end
     
