@@ -1,5 +1,19 @@
-%% A class for creating nice-looking figures
+%% Fig - A class for creating nice-looking figures
 % 
+% This class is intended to override Matlab's figure() so that
+% figures are created with (opinionated) sensible default values
+% that provide a nice-looking figure.
+%
+% The class is designed to be able to be easily switched for the
+% figure() function and immediately get the benefits of the class,
+% i.e., so that you can substitute
+%   figure(1); plot(x, y, 'r:')
+% for
+%   Fig(1); plot(x, y, 'r:')
+% and the resulting figure will be nicer looking.
+%
+% fig_var = Fig(num) - Fig constructor. Creates a new Fig object
+%
 % Constructor optional arguments
 %   - clear_fig: boolean (true). Does clf() on the figure
 %   - title: string. Title of the figure
@@ -16,13 +30,27 @@
 %   - colorscheme: string ("lines"). Determines the color scheme of the plots
 %   - max_num_colors: integer (8). Determines the number of different colors
 %
-% Properties
+% Fig properties (accessed using fig_var.property_name)
 %   - All the contructor optional arguments are saved into 
 %     properties with the same name except for: clear_fig
 %   - num: Stores the number of the figure
 %   - fh: Handler to the figure
 %   - ax: Handler for the axis object of the figure
 %   - ph: Cell containing the handlers to each of the plots
+%
+% Most properties can be reasigned: fig_var.property_name = value;
+%
+% Fig methods (executed using fig_var.method_name(args);)
+%   - focus() focuses the figure
+%   - clear() equivalent to clf(fig_var.num)
+%   - trim() to delete (or select) plot margins
+%   - y_scale() Switch between 'log' and 'linear' scale in y axis
+%   - x_scale() Switch between 'log' and 'linear' scale in x axis
+%   - plot() overrides Matlab's default plot() function
+%
+% For additional help on a method call: help Fig.method_name
+%
+% See also: figure(), plot(), clf()
 
 classdef Fig < handle
     
@@ -37,7 +65,7 @@ classdef Fig < handle
         linewidth {mustBeReal, mustBePositive} % Line width for new plot lines
         markersize {mustBeReal, mustBePositive} % Marker size for new plot lines
         fontsize {mustBeReal, mustBePositive} % Font size of the main text elements
-        colorscheme {ischar} = "lines"
+        colorscheme {ischar} = "lines" % Color scheme of the figure
     end
     properties(SetAccess=protected, GetAccess=public)
        num % Stores the figure number
@@ -46,19 +74,19 @@ classdef Fig < handle
         fh % Figure handler
         ax % Axis handler
         ph % List of plot handlers
-        max_num_colors {mustBeInteger, mustBeGreaterThanOrEqual(max_num_colors,0)} = 8
+        max_num_colors {mustBeInteger, mustBeGreaterThanOrEqual(max_num_colors,0)} = 8 % Number of plot lines before colors start repeating
         interpreter {ischar} = 'latex' % Interpreter used to print text
     end
     properties (Hidden = true, SetAccess=protected, GetAccess=protected)
-        color_red = [1 0 0];
-        color_green = [0 1 0];
-        color_blue = [0 0 1];
-        color_cyan = [0 1 1];
-        color_magenta = [1 0 1];
-        color_yellow = [1 1 0];
-        color_black = [0 0 0];
-        color_white = [1 1 1];
-        previous_ax_position;
+        color_red = [1 0 0]; % Basic red color
+        color_green = [0 1 0]; % Basic green color
+        color_blue = [0 0 1]; % Basic blue color
+        color_cyan = [0 1 1]; % Basic cyan color
+        color_magenta = [1 0 1]; % Basic magenta color
+        color_yellow = [1 1 0]; % Basic yellow color
+        color_black = [0 0 0]; % Basic black color
+        color_white = [1 1 1]; % Basic white color
+        previous_ax_position; % Used to store the previous value of ax.Position. Used in previous_pos()
     end
     
     methods
@@ -243,13 +271,17 @@ classdef Fig < handle
     
     function focus(self)
         % Fig.focus() - Focuses the figure
+        %
         % Equivalent to calling figure(x) for some preexisting figure number x
+
         figure(self.fh);
     end
     
     function clear(self)
         % Fig.clear() - Clears the figure
-        % Calles clf() on the figure
+        %
+        % Calls clf() on the figure
+
         clf(self.num);
     end
     
@@ -333,9 +365,14 @@ classdef Fig < handle
     end
 
     function y_scale(self, value)
+        % Fig.y_scale() - Select y axis scale mode
+        % 
         % y_scale() - Switch Y axis scale between 'linear' and 'log'
         % y_scale('log') - Set Y axis scale to 'log'
-        % y_scale('log') - Set Y axis scale to 'linear'
+        % y_scale('linear') - Set Y axis scale to 'linear'
+        %
+        % See also: Fig.x_scale()
+
         if nargin == 1
             if strcmp(self.ax.YScale, 'linear')
                 value = 'log';
@@ -347,9 +384,14 @@ classdef Fig < handle
     end
     
     function x_scale(self, value)
+        % Fig.x_scale() - Select x axis scale mode
+        %
         % x_scale() - Switch X axis scale between 'linear' and 'log'
         % x_scale('log') - Set X axis scale to 'log'
-        % x_scale('log') - Set X axis scale to 'linear'
+        % x_scale('linear') - Set X axis scale to 'linear'
+        %
+        % See also: Fig.y_scale()
+
         if nargin == 1
             if strcmp(self.ax.XScale, 'linear')
                 value = 'log';
@@ -360,31 +402,45 @@ classdef Fig < handle
         set(self.ax, 'XScale', value);
     end
     
-    
     %% PLOT METHODS
     
     function plot(self, varargin)
-        % Overload of the standard plot() function
+        % Fig.plot() - Overload of Matlab's standard plot() function
+        %
+        % Supports the main name-value parameters of Matlab's plot(), but
+        % providing (opinionated) sensible values to them.
+        % 
+        % The currently supported name-value parameters are:
+        %   - linewidth
+        %   - markersize
+        %   - linestyle
+        %   - marker
+        %   - color
+        % 
+        % Also supports the standard Fig.plot(x, y, 'r:') way of
+        % choosing line color and style.
+        %
+        % See also: plot()
 
         % Default values
         def_mods = '';
         def_linewidth = self.linewidth;
         def_markersize = self.markersize;
-        def_linesyle = '-';
+        def_linestyle = '-';
         def_marker = 'none';
-        
         def_color = self.ax.ColorOrder(mod(length(self.ph), self.max_num_colors) + 1, :);
+
         % Parser
         par = inputParser;
         par.CaseSensitive = false;
-        par.FunctionName = 'Fig::plot';
+        par.FunctionName = 'Fig.plot()';
         % Required
         addRequired(par, 'x');
         addRequired(par, 'y');
         % Optional
         addOptional(par, 'mods', def_mods, @(x) ischar(x));
         % Name-value parameters
-        addParameter(par, 'linestyle', def_linesyle, @(x) ischar(x));
+        addParameter(par, 'linestyle', def_linestyle, @(x) ischar(x));
         addParameter(par, 'marker', def_marker, @(x) ischar(x));
         addParameter(par, 'linewidth', def_linewidth, @(x) isnumeric(x) && (x>0));
         addParameter(par, 'markersize', def_markersize, @(x) isnumeric(x) && (x>0));
@@ -398,38 +454,39 @@ classdef Fig < handle
         % Rename
         x = par.Results.x;
         y = par.Results.y;
-        mods = par.Results.mods;
-        linestyle = par.Results.linestyle;
-        marker = par.Results.marker;
-        linewidth = par.Results.linewidth;
-        markersize = par.Results.markersize;
-        color = par.Results.color;
+        mods_ = par.Results.mods;
+        linestyle_ = par.Results.linestyle;
+        marker_ = par.Results.marker;
+        linewidth_ = par.Results.linewidth;
+        markersize_ = par.Results.markersize;
+        color_ = par.Results.color;
 
         % Use marker from mods is available
-        idx_mods_marker = regexp(mods ,'[.ox+*sdv^<>ph]');
+        idx_mods_marker = regexp(mods_ ,'[.ox+*sdv^<>ph]');
         if ~isempty(idx_mods_marker)
-            marker = mods(idx_mods_marker);
-            linestyle = 'none';
+            marker_ = mods_(idx_mods_marker);
+            linestyle_ = 'none';
         end
 
         % Use color from mods if available
-        idx_mods_color = regexp(mods ,'[rgbcmykw]');
+        idx_mods_color = regexp(mods_ ,'[rgbcmykw]');
         if ~isempty(idx_mods_color)
-            color = self.get_basic_color(mods(idx_mods_color));
+            color_ = self.get_basic_color(mods_(idx_mods_color));
         end
 
         % Use linestyle from mods if available
-        mods_linestyle = erase(mods, mods(idx_mods_marker));
-        mods_linestyle = erase(mods_linestyle, mods(idx_mods_color));
+        mods_linestyle = erase(mods_, mods_(idx_mods_marker));
+        mods_linestyle = erase(mods_linestyle, mods_(idx_mods_color));
         if ~isempty(mods_linestyle)
-            linestyle = mods_linestyle;
+            linestyle_ = mods_linestyle;
         end
 
+        % Plot
         self.focus();
-        self.ph{end+1} = plot(self.ax, x, y, mods,...
-                              'Color', color,...
-                              'linewidth', linewidth, 'LineStyle', linestyle,...
-                              'markersize', markersize, 'Marker', marker...
+        self.ph{end+1} = plot(self.ax, x, y, mods_,...
+                              'Color', color_,...
+                              'linewidth', linewidth_, 'LineStyle', linestyle_,...
+                              'markersize', markersize_, 'Marker', marker_...
                               );
          
         % Post plot
@@ -456,61 +513,46 @@ classdef Fig < handle
         self.ax.Position = self.previous_ax_position;
         self.previous_ax_position = pos_aux;
     end
-    
 
     function update_plots_linewidth(self, value)
+        % Sets the linewidth of all the current plots to the given value
         for i = 1:length(self.ph)
             self.ph{i}.LineWidth = value;
         end
     end
 
     function update_plots_color(self)
+        % Sets the color order of all the current plots to the colors in ax.ColorOrder
         for i = 1:length(self.ph)
             self.ph{i}.Color = self.ax.ColorOrder(mod(i-1, self.max_num_colors)+1, :);
         end
     end
 
     function color = get_basic_color(self, name)
-
+        % Returns the basic color states in the string 'name'
         color = [];
 
         switch name
-            case 'red'
-                color = self.color_red;
-            case 'r'
-                color = self.color_red;
-            case 'green'
-                color = self.color_green;
-            case 'g'
-                color = self.color_green;
-            case 'blue'
-                color = self.color_blue;
-            case 'b'
-                color = self.color_blue;
-            case 'cyan'
-                color = self.color_cyan;
-            case 'c'
-                color = self.color_cyan;
-            case 'magenta'
-                color = self.color_magenta;
-            case 'm'
-                color = self.color_magenta;
-            case 'yellow'
-                color = self.color_yellow;
-            case 'y'
-                color = self.color_yellow;
-            case 'black'
-                color = self.color_black;
-            case 'k'
-                color = self.color_black;
-            case 'white'
-                color = self.color_white;
-            case 'w'
-                color = self.color_white;
+            case 'red';     color = self.color_red;
+            case 'r';       color = self.color_red;
+            case 'green';   color = self.color_green;
+            case 'g';       color = self.color_green;
+            case 'blue';    color = self.color_blue;
+            case 'b';       color = self.color_blue;
+            case 'cyan';    color = self.color_cyan;
+            case 'c';       color = self.color_cyan;
+            case 'magenta'; color = self.color_magenta;
+            case 'm';       color = self.color_magenta;
+            case 'yellow';  color = self.color_yellow;
+            case 'y';       color = self.color_yellow;
+            case 'black';   color = self.color_black;
+            case 'k';       color = self.color_black;
+            case 'white';   color = self.color_white;
+            case 'w';       color = self.color_white;
         end
 
     end
 
-    end
+    end % End of protected methods
     
 end
