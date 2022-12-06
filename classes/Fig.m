@@ -425,7 +425,7 @@ classdef Fig < handle
         % Name-value parameters
         addParameter(par, 'name', def_name, @(x) isstring(x) || ischar(x));
         addParameter(par, 'directory', def_directory, @(x) isstring(x) || ischar(x));
-        addParameter(par, 'extension', def_extension, @(x) ischar(x));
+        addParameter(par, 'extension', def_extension, @(x) isstring(x) || ischar(x));
         addParameter(par, 'date', def_date, @(x) islogical(x) || x==1 || x==0);
         addParameter(par, 'unique', def_unique, @(x) islogical(x) || x==1 || x==0);
         addParameter(par, 'color', def_color, @(x) islogical(x) || x==1 || x==0);
@@ -609,6 +609,64 @@ classdef Fig < handle
     end
     
     end % End public methods
+
+    %% STATIC METHODS
+
+    methods(Static)
+
+    function save_all(varargin)
+        % Fig.save_all() - Saves all the Figs in the current workspace
+        %
+        % Each Fig object in the current workspace is saved with their
+        % default names.
+        %
+        % All the other optional name-value parameters of Fig.save() are
+        % available in this method, e.g., 
+        %
+        % Fig.save_all('extension', 'pdf');
+        % 
+        % This method is Static, so it can be called by typing:
+        % >> Fig.save_all()
+        % instead of having to use a Fig instance to call it.
+        %
+        % See also: Fig.save
+
+        def_directory = './';
+        def_extension = 'eps';
+        def_date = 0;
+        def_unique = 0;
+        def_color = 1;
+
+        % Parser
+        par = inputParser;
+        par.CaseSensitive = false;
+        par.FunctionName = 'Fig.save_all()';
+        % Name-value parameters
+        addParameter(par, 'directory', def_directory, @(x) isstring(x) || ischar(x));
+        addParameter(par, 'extension', def_extension, @(x) ischar(x));
+        addParameter(par, 'date', def_date, @(x) islogical(x) || x==1 || x==0);
+        addParameter(par, 'unique', def_unique, @(x) islogical(x) || x==1 || x==0);
+        addParameter(par, 'color', def_color, @(x) islogical(x) || x==1 || x==0);
+        % Parse
+        parse(par, varargin{:})
+
+            ws = evalin('base', 'who');
+            for i=1:length(ws)
+                if isa(evalin('base', ws{i}), 'Fig')
+
+                    evalin('base',...
+                    [ws{i} '.save("directory", "' par.Results.directory '"' ...
+                                    ', "extension", "' char(par.Results.extension) '"' ...
+                                    ', "date", ' char(num2str(par.Results.date)) ...
+                                    ', "unique", ' char(num2str(par.Results.unique)) ...
+                                    ', "color", ' char(num2str(par.Results.color)) ...
+                                    ');'])
+
+                end
+            end
+        end
+
+    end
 
     %% PROTECTED METHODS
 
