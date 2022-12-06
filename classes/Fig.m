@@ -50,7 +50,7 @@
 %
 % For additional help on a method call: help Fig.method_name
 %
-% See also: figure(), plot(), clf()
+% See also: figure, plot, clf
 
 classdef Fig < handle
     
@@ -305,7 +305,7 @@ classdef Fig < handle
         % Fig.trim('undo') calls Fig.previous_pos(). Will undo the trim if called before
         % some other method which updates the plot position (see Fig.previous_pos())
         %
-        % See also: Fig.previous_pos()
+        % See also: Fig.previous_pos
 
         if nargin == 2 && strcmp(varargin{1}, 'undo')
 
@@ -371,7 +371,7 @@ classdef Fig < handle
         % y_scale('log') - Set Y axis scale to 'log'
         % y_scale('linear') - Set Y axis scale to 'linear'
         %
-        % See also: Fig.x_scale()
+        % See also: Fig.x_scale
 
         if nargin == 1
             if strcmp(self.ax.YScale, 'linear')
@@ -390,7 +390,7 @@ classdef Fig < handle
         % x_scale('log') - Set X axis scale to 'log'
         % x_scale('linear') - Set X axis scale to 'linear'
         %
-        % See also: Fig.y_scale()
+        % See also: Fig.y_scale
 
         if nargin == 1
             if strcmp(self.ax.XScale, 'linear')
@@ -420,7 +420,7 @@ classdef Fig < handle
         % Also supports the standard Fig.plot(x, y, 'r:') way of
         % choosing line color and style.
         %
-        % See also: plot()
+        % See also: plot
 
         % Default values
         def_mods = '';
@@ -507,7 +507,7 @@ classdef Fig < handle
         % Functions that update the previous value are:
         %   Fig.plot(), Fig.trim()
         %
-        % See also: Fig.plot(), Fig.trim()
+        % See also: Fig.plot, Fig.trim
 
         pos_aux = self.ax.Position;
         self.ax.Position = self.previous_ax_position;
