@@ -87,6 +87,13 @@ classdef Fig < handle
         color_black = [0 0 0]; % Basic black color
         color_white = [1 1 1]; % Basic white color
         previous_ax_position; % Used to store the previous value of ax.Position. Used in previous_pos()
+        default_date_Format = 'yy_MM_dd_HH_mm_ss';
+    end
+    properties (Hidden = true, SetAccess=protected)
+        id % A unique id set when the object is created
+        date % Instance of datetime created at the end of Fig's constructor
+        gt_version % The version of GepocToolbox
+        gt_id % The git hash version of GepocToolbox
     end
     
     methods
@@ -167,6 +174,18 @@ classdef Fig < handle
         self.colorscheme = par.Results.colorscheme;
         self.ph = cell(0);
         self.previous_ax_position = self.ax.Position;
+        
+        % Set identifiers and date
+        self.id = string(java.util.UUID.randomUUID);
+        try
+            [self.gt_version, self.gt_id] = gepoc('version'); 
+        catch ME
+            if ~(strcmp(ME.identifier,'MATLAB:UndefinedFunction'))
+                rethrow(ME)
+            end
+        end
+        self.date = datetime('now');
+        self.date.Format = self.default_date_Format;
         
     end
     
@@ -266,6 +285,11 @@ classdef Fig < handle
         self.update_plots_color(); % Update the color of all plots
     end
 
+    function set_dateFormat(self, value)
+        % This method sets the format of the internal date property
+        % (instance of datetime) to the provided value
+        self.date.Format = value;
+    end
     
     %% PUBLIC METHODS
     
