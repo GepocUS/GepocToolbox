@@ -47,6 +47,7 @@
 %   - y_scale() Switch between 'log' and 'linear' scale in y axis
 %   - x_scale() Switch between 'log' and 'linear' scale in x axis
 %   - plot() overrides Matlab's default plot() function
+%   - save() saves the figure as a file
 %
 % For additional help on a method call: help Fig.method_name
 %
@@ -385,6 +386,95 @@ classdef Fig < handle
         ax_width = outerpos(3) - ti(1) - ti(3) - east_margin - west_margin;
         ax_height = outerpos(4) - ti(2) - ti(4) - north_margin - south_margin;
         self.ax.Position = [left bottom ax_width ax_height];
+
+    end
+
+    function save(self, varargin)
+        % Fig.save() - Saves the figure
+        %
+        % This method saves the figure with the given name and
+        % file-type provided in the provided directory.
+        %
+        % Name-value input parameters:
+        %   - name: Name of the file. If none is provided then the figure's title is used.
+        %           If no title is available then the date of creation of the Fig is used.
+        %   - directory: Directory where the file is saved.
+        %                Relative paths can be used by "./rel_path" or simply "rel_path"
+        %                Warning: "~" cannot be used in Linux. Use "/home/username/"
+        %   - extension: Format the file is saved as. By default it is saved as a '.eps'
+        %                Supported file-types are the ones supported by saveas()
+        %   - date: If true, the date of creation of the figure is appended to the name
+        %   - unique: If true, the Fig unique identifier is appended to the name
+        %   - color: defaults to true. If false then the figure is saved in black and white.
+        %            Only available for the 'eps' extension.
+        %
+        % See also: saveas
+
+        % Default values
+        def_name = [];
+        def_directory = './';
+        def_extension = 'eps';
+        def_date = false;
+        def_unique = false;
+        def_color = true;
+
+        % Parser
+        par = inputParser;
+        par.CaseSensitive = false;
+        par.FunctionName = 'Fig.save()';
+        % Name-value parameters
+        addParameter(par, 'name', def_name, @(x) isstring(x) || ischar(x));
+        addParameter(par, 'directory', def_directory, @(x) isstring(x) || ischar(x));
+        addParameter(par, 'extension', def_extension, @(x) ischar(x));
+        addParameter(par, 'date', def_date, @(x) islogical(x) || x==1 || x==0);
+        addParameter(par, 'unique', def_unique, @(x) islogical(x) || x==1 || x==0);
+        addParameter(par, 'color', def_color, @(x) islogical(x) || x==1 || x==0);
+        % Parse
+        parse(par, varargin{:})
+
+        % Set name
+        name = string(par.Results.name);
+        if isempty(name)
+            if ~isempty(self.title)
+                name = self.title;
+                if par.Results.date
+                    name = name + "_" + string(self.date);
+                end
+            else
+                name = string(self.date);
+            end
+        else
+            if par.Results.date
+                name = name + "_" + string(self.date);
+            end
+        end
+
+        % Add unique identifier
+        if par.Results.unique
+            name = name + "_" + extractBetween(self.id, 1, "-");
+        end
+
+        % Create full path
+        directory = string(par.Results.directory);
+        dir_char = char(directory);
+        % directory
+        if ~strcmp(dir_char(end), "/")
+            directory = directory + "/";
+        end
+
+        name = fullfile(directory, name);
+
+        % Save figure
+        switch par.Results.extension
+            case 'eps'
+                if par.Results.color
+                    saveas(self.fh, name, 'epsc');
+                else
+                    saveas(self.fh, name, 'eps');
+                end
+            otherwise
+                saveas(self.fh, name, par.Results.extension);
+        end
 
     end
 
