@@ -36,6 +36,7 @@
 %   - num: Stores the number of the figure
 %   - fh: Handler to the figure
 %   - ax: Handler for the axis object of the figure
+%   - lgd: Handler for the legend of the figure
 %   - ph: Cell containing the handlers to each of the plots
 %
 % Most properties can be reasigned: fig_var.property_name = value;
@@ -74,9 +75,11 @@ classdef Fig < handle
     properties (Hidden = true)
         fh % Figure handler
         ax % Axis handler
+        lgd % Legend handler
         ph % List of plot handlers
         max_num_colors {mustBeInteger, mustBeGreaterThanOrEqual(max_num_colors,0)} = 8 % Number of plot lines before colors start repeating
         interpreter {ischar} = 'latex' % Interpreter used to print text
+        lgd_icons; % Stores the legend icons array, for manipulation of details of the legend
     end
     properties (Hidden = true, SetAccess=protected, GetAccess=protected)
         color_red = [1 0 0]; % Basic red color
@@ -89,6 +92,7 @@ classdef Fig < handle
         color_white = [1 1 1]; % Basic white color
         previous_ax_position; % Used to store the previous value of ax.Position. Used in previous_pos()
         default_date_Format = 'yy_MM_dd_HH_mm_ss';
+        has_legend = false; % Used internally to know if a legend has been created already
     end
     properties (Hidden = true, SetAccess=protected)
         id % A unique id set when the object is created
@@ -123,7 +127,7 @@ classdef Fig < handle
         % Parser
         par = inputParser;
         par.CaseSensitive = false;
-        par.FunctionName = 'gpFig_constructor';
+        par.FunctionName = 'Fig.constructor()';
         
         % Optional
         addOptional(par, 'fig_num', def_fig_num, @(x) isnumeric(x) && (x>=1) && x==floor(x));
@@ -219,10 +223,13 @@ classdef Fig < handle
     
     function set.interpreter(self, value)
         self.interpreter = value;
-        set(self.ax.Title,'Interpreter', value);
+        set(self.ax.Title, 'Interpreter', value);
         set(self.ax, 'TickLabelInterpreter', value);
         set(self.ax.XLabel, 'Interpreter', value);
         set(self.ax.YLabel, 'Interpreter', value);
+        if self.has_legend
+            set(self.lgd, 'Interpreter', value);
+        end
     end
     
     function set.linewidth(self, value)
@@ -237,6 +244,9 @@ classdef Fig < handle
         if ~isempty(value)
             self.fontsize = value;
             set(self.ax, 'FontSize', value);
+            if self.has_legend
+                set(self.lgd, 'FontSize', value);
+            end
         end
     end
     
@@ -605,6 +615,145 @@ classdef Fig < handle
          
         % Post plot
         self.previous_ax_position = self.ax.Position;
+
+    end
+
+    function legend(self, varargin)
+        % Fig.legend() - Overload of Matlab's legend() function
+        %
+        % Supports the main name-value parameters of Matlab's legend(), but
+        % providing (opinionated) sensible values to them.
+        % It also adds various additional name-valued options.
+        % 
+        % Fig.legend(labels) is equivalent to Matlab's legend(labels) call.
+        % 
+        % Fig.legend(subset, labels) is equivalent to Matlab's legend(subset, labels) call.
+        % subset here is an array of positive integers indicating the lines related to each label.  
+        %
+        % Fig.legend() does not support the legend(label1, label2, label3, ...) prototype.
+        % 
+        % Name-value parameters:
+        %   - fontsize: Text fontsize. Defaults to Fig.fontsize.
+        %   - interpreter: Text interpreter. Defaults to Fig.intepreter.
+        %   - location: Same as the 'location' option of Matlab's legend().
+        %               Defaults to 'best'.
+        %   - orientation: String: 'vertical' or 'horizontal'.
+        %   - outside: Boolean. If set to true the legend is located outside the axes.
+        %              Location will depend on the value of 'orientation'
+        %              If true it overrides the value assigned to 'location', if any.
+        %   - position: Equivalent to the 'position' option of Matlab's legend().
+        %               Array of 4 positive numbers that determines the position of the legend.
+        %               If provided, the provided values of 'location' and 'orientation' are ignored.
+        %   - box: String: 'on', 'off' (also accepts boolean value, 0 or 1).
+        %          If false (or 'off') the line surrounding the legend is not displayed.
+        %   - onlymarker: Boolean. Defaults to false. If true then the legend only displays the marker
+        %                 for plots which have both a line and a marker.
+        %   - linewidth: Line width used for the symbols in the legend. Defaults to Fig.linewidth.
+        %   - markersize: Marker size used for the symbols in the legend. Defaults to Fig.markersize.
+        % 
+        % See also: legend
+ 
+        % Default values
+        def_lines = [];
+        def_labels = {};
+        def_fontsize = self.fontsize;
+        def_interpreter = self.interpreter;
+        def_location = 'best';
+        def_outside = false;
+        def_position = [];
+        def_orientation = 'vertical';
+        def_box = 'on';
+        def_onlymarker = false;
+        def_linewidth = self.linewidth;
+        def_markersize = self.markersize;
+
+        % Parser
+        par = inputParser;
+        par.CaseSensitive = false;
+        par.FunctionName = 'Fig.legend()';
+
+        % Optional
+        addOptional(par, 'lines', def_lines, @(x) isempty(x) || ( length(x)>0 && isnumeric(x(1)) ) );
+        addOptional(par, 'labels', def_labels, @(x) isempty(x) || ( length(x)>0 && iscell(x) ) );
+        % Name-value parameters
+        addParameter(par, 'fontsize', def_fontsize, @(x) isnumeric(x) && (x>0));
+        addParameter(par, 'interpreter', def_interpreter, @(x) ischar(x));
+        addParameter(par, 'location', def_location, @(x) ischar(x));
+        addParameter(par, 'outside', def_outside, @(x) islogical(x) || x==1 || x==0);
+        addParameter(par, 'position', def_position, @(x) length(x)==4 || isempty(x));
+        addParameter(par, 'orientation', def_orientation, @(x) ischar(x));
+        addParameter(par, 'box', def_box, @(x) ischar(x) || islogical(x) || x==1 || x==0);
+        addParameter(par, 'onlymarker', def_onlymarker, @(x) islogical(x) || x==1 || x==0);
+        addParameter(par, 'linewidth', def_linewidth, @(x) isnumeric(x) && (x>0));
+        addParameter(par, 'markersize', def_markersize, @(x) isnumeric(x) && (x>0));
+
+        % Parse
+        if mod(length(varargin), 2)==0
+            parse(par, varargin{:});
+        else
+            if iscell(varargin{1})
+                parse(par, def_lines, varargin{:});
+            else
+                parse(par, varargin{1}, def_labels, varargin{2:end});
+            end
+        end
+
+        % Rename
+        if isempty(par.Results.lines)
+            lines = [self.ph{:}];
+        else
+            lines = [self.ph{par.Results.lines}];
+        end
+        labels = par.Results.labels;
+        position = par.Results.position;
+        location = par.Results.location;
+        box = par.Results.box;
+        if ~ischar(box)
+            if box; box = 'on'; else; box = 'off'; end
+        end
+
+        % Create legend
+        [self.lgd, self.lgd_icons, ~, ~] = legend(lines, labels,...
+                          'Interpreter', par.Results.interpreter, ...
+                          'FontSize', par.Results.fontsize, ...
+                          'Orientation', par.Results.orientation, ...
+                          'Box', box ...
+                          );
+
+        % Only show markers
+        icon_num = length(self.lgd_icons);
+        for i = 1:icon_num
+            if isprop(self.lgd_icons(i), 'Marker')
+                icon_init = i; % First element in self.lgd_icons that corresponds to a line or marker
+                break;
+            end
+        end
+        if par.Results.onlymarker
+            j = 0;
+            for i = icon_init:2:icon_num
+                if ~strcmp(self.lgd_icons(i).LineStyle, 'none') && ~strcmp(self.lgd_icons(i+1).Marker, 'none') 
+                    self.lgd_icons(i).LineStyle = 'none';
+                end
+            end
+        end
+
+        % Change line and marker sizes
+        for i = icon_init:icon_num
+            self.lgd_icons(i).LineWidth = par.Results.linewidth;
+            self.lgd_icons(i).MarkerSize = par.Results.markersize;
+        end
+
+        % Set position of legend
+        if par.Results.outside
+            location = 'bestoutside';
+        end
+        if isempty(position)
+            set(self.lgd, 'location', location);
+        else
+            set(self.lgd, 'Position', position);
+        end
+
+        self.has_legend = true;
 
     end
     
