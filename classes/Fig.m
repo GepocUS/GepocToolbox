@@ -32,7 +32,8 @@
 %
 % Fig properties (accessed using fig_var.property_name)
 %   - All the contructor optional arguments are saved into 
-%     properties with the same name except for: clear_fig
+%     properties with the same name except for:
+%     clear_fig, title, xlabel, ylabel
 %   - num: Stores the number of the figure
 %   - fh: Handler to the figure
 %   - ax: Handler for the axis object of the figure
@@ -44,6 +45,9 @@
 % Fig methods (executed using fig_var.method_name(args);)
 %   - focus() focuses the figure
 %   - clear() equivalent to clf(fig_var.num)
+%   - title() to change the title
+%   - xlabel() to change the xlabel
+%   - ylabel() to change the ylabel
 %   - trim() to delete (or select) plot margins
 %   - y_scale() Switch between 'log' and 'linear' scale in y axis
 %   - x_scale() Switch between 'log' and 'linear' scale in x axis
@@ -57,9 +61,6 @@
 classdef Fig < handle
     
     properties
-        title {ischar} % Title of the figure
-        xlabel {ischar} = "" % Label of the X-axis
-        ylabel {ischar} = "" % Label of the Y-axis
         bg_color % Background color
         grid {mustBeInteger, mustBeGreaterThanOrEqual(grid,0), mustBeLessThanOrEqual(grid,1)} % Sets grid to 'on' or 'off'
         hold {mustBeInteger, mustBeGreaterThanOrEqual(hold,0), mustBeLessThanOrEqual(hold,1)} % Sets hold to 'on' or 'off'
@@ -93,6 +94,9 @@ classdef Fig < handle
         previous_ax_position; % Used to store the previous value of ax.Position. Used in previous_pos()
         default_date_Format = 'yy_MM_dd_HH_mm_ss';
         has_legend = false; % Used internally to know if a legend has been created already
+        title_ {ischar} % Title of the figure
+        xlabel_ {ischar} = "" % Label of the X-axis
+        ylabel_ {ischar} = "" % Label of the Y-axis
     end
     properties (Hidden = true, SetAccess=protected)
         id % A unique id set when the object is created
@@ -166,9 +170,9 @@ classdef Fig < handle
         % Set properties
         self.hold = par.Results.hold;
         self.interpreter = par.Results.interpreter;
-        self.title = par.Results.title;
-        self.xlabel = par.Results.xlabel;
-        self.ylabel = par.Results.ylabel;
+        self.title_ = par.Results.title;
+        self.xlabel_ = par.Results.xlabel;
+        self.ylabel_ = par.Results.ylabel;
         self.bg_color = par.Results.bg_color;
         self.grid = par.Results.grid;
         self.minorgrid = par.Results.minorgrid;
@@ -200,23 +204,23 @@ classdef Fig < handle
         value = self.fh.Number;
     end
     
-    function set.title(self, value)
+    function set.title_(self, value)
         if ~isempty(value)
-            self.title = value;
+            self.title_ = value;
             set(self.ax.Title, 'String', value);
         end
     end
     
-    function set.xlabel(self, value)
+    function set.xlabel_(self, value)
         if ~isempty(value)
-            self.xlabel = value;
+            self.xlabel_ = value;
             set(self.ax.XLabel, 'String', value);
         end
     end
     
-    function set.ylabel(self, value)
+    function set.ylabel_(self, value)
         if ~isempty(value)
-            self.ylabel = value;
+            self.ylabel_ = value;
             set(self.ax.YLabel, 'String', value);
         end
     end
@@ -318,6 +322,192 @@ classdef Fig < handle
         % Calls clf() on the figure
 
         clf(self.num);
+    end
+
+    function the_title = title(self, value, varargin)
+        % Fig.title() - Sets or changes the figure title
+        % 
+        % fig.title("str") - Sets fig's title to "str" and
+        %                    returns the current title
+        % 
+        % fig.title() - Returns the current title
+        % 
+        % fig.title("str", 'opt_name', value, ...) - Add additional options
+        %   - 'interpreter': Sets the given interpreter
+        %   - 'FontSize': Sets the given font size
+        %   - 'FontWeight': Thickness of text characters ('normal' or 'bold')
+        %   - 'Color': Sets the color (default: [0 0 0]).
+        %              RBG triplet or char for basic colors ('r', 'b', etc.)
+        % 
+        % See also: title
+
+        if nargin == 2
+
+            self.title_ = value;
+
+        else
+
+            % Default values
+            def_title = self.title_;
+            def_interpreter = self.interpreter;
+            def_fontsize = self.fontsize;
+            def_fontweight = 'bold';
+            def_color = [0 0 0];
+
+            % Parser
+            par = inputParser;
+            par.CaseSensitive = false;
+            par.FunctionName = 'Fig.title()';
+            % Optional
+            addOptional(par, 'title', def_title, @(x) isstring(x));
+            % Name-value parameters
+            addParameter(par, 'interpreter', def_interpreter, @(x) ischar(x));
+            addParameter(par, 'fontsize', def_fontsize, @(x) isnumeric(x) && (x>0) && x==floor(x));
+            addParameter(par, 'fontweight', def_fontweight, @(x) ischar(x));
+            addParameter(par, 'color', def_color);
+            % Parse
+            parse(par, value, varargin{:})
+
+            % Set interpreter
+            set(self.ax.Title, 'Interpreter', par.Results.interpreter);
+            set(self.ax.Title, 'FontSize', par.Results.fontsize);
+            set(self.ax.Title, 'FontWeight', par.Results.fontweight);
+            if ischar(par.Results.color)
+                set(self.ax.Title, 'Color', self.get_basic_color(par.Results.color));
+            else
+                set(self.ax.Title, 'Color', par.Results.color);
+            end
+
+            self.title_ = par.Results.title;
+
+        end
+
+        the_title = self.title_;
+
+    end
+
+    function the_label = xlabel(self, value, varargin)
+        % Fig.xlabel() - Sets or changes the figure xlabel
+        % 
+        % fig.xlabel("str") - Sets fig's xlabel to "str" and
+        %                     returns the current xlabel
+        % 
+        % fig.xlabel() - Returns the current xlabel
+        % 
+        % fig.xlabel("str", 'opt_name', value, ...) - Add additional options
+        %   - 'interpreter': Sets the given interpreter
+        %   - 'FontSize': Sets the given font size
+        %   - 'FontWeight': Thickness of text characters ('normal' or 'bold')
+        %   - 'Color': Sets the color (default: [0 0 0]).
+        %              RBG triplet or char for basic colors ('r', 'b', etc.)
+        % 
+        % See also: xlabel
+
+        if nargin == 2
+
+            self.xlabel_ = value;
+
+        else
+
+            % Default values
+            def_xlabel = self.xlabel_;
+            def_interpreter = self.interpreter;
+            def_fontsize = self.fontsize;
+            def_fontweight = 'bold';
+            def_color = [0 0 0];
+
+            % Parser
+            par = inputParser;
+            par.CaseSensitive = false;
+            par.FunctionName = 'Fig.xlabel()';
+            % Optional
+            addOptional(par, 'xlabel', def_xlabel, @(x) isstring(x));
+            % Name-value parameters
+            addParameter(par, 'interpreter', def_interpreter, @(x) ischar(x));
+            addParameter(par, 'fontsize', def_fontsize, @(x) isnumeric(x) && (x>0) && x==floor(x));
+            addParameter(par, 'fontweight', def_fontweight, @(x) ischar(x));
+            addParameter(par, 'color', def_color);
+            % Parse
+            parse(par, value, varargin{:})
+
+            % Set interpreter
+            set(self.ax.XLabel, 'Interpreter', par.Results.interpreter);
+            set(self.ax.XLabel, 'FontSize', par.Results.fontsize);
+            set(self.ax.XLabel, 'FontWeight', par.Results.fontweight);
+            if ischar(par.Results.color)
+                set(self.ax.XLabel, 'Color', self.get_basic_color(par.Results.color));
+            else
+                set(self.ax.XLabel, 'Color', par.Results.color);
+            end
+
+            self.xlabel_ = par.Results.xlabel;
+
+        end
+
+        the_label = self.xlabel_;
+
+    end
+
+    function the_label = ylabel(self, value, varargin)
+        % Fig.ylabel() - Sets or changes the figure ylabel
+        % 
+        % fig.ylabel("str") - Sets fig's ylabel to "str" and
+        %                     returns the current ylabel
+        % 
+        % fig.ylabel() - Returns the current ylabel
+        % 
+        % fig.ylabel("str", 'opt_name', value, ...) - Add additional options
+        %   - 'interpreter': Sets the given interpreter
+        %   - 'FontSize': Sets the given font size
+        %   - 'FontWeight': Thickness of text characters ('normal' or 'bold')
+        %   - 'Color': Sets the color (default: [0 0 0]).
+        %              RBG triplet or char for basic colors ('r', 'b', etc.)
+        % 
+        % See also: ylabel
+
+        if nargin == 2
+
+            self.ylabel_ = value;
+
+        else
+
+            % Default values
+            def_ylabel = self.ylabel_;
+            def_interpreter = self.interpreter;
+            def_fontsize = self.fontsize;
+            def_fontweight = 'bold';
+            def_color = [0 0 0];
+
+            % Parser
+            par = inputParser;
+            par.CaseSensitive = false;
+            par.FunctionName = 'Fig.ylabel()';
+            % Optional
+            addOptional(par, 'ylabel', def_ylabel, @(x) isstring(x));
+            % Name-value parameters
+            addParameter(par, 'interpreter', def_interpreter, @(x) ischar(x));
+            addParameter(par, 'fontsize', def_fontsize, @(x) isnumeric(x) && (x>0) && x==floor(x));
+            addParameter(par, 'fontweight', def_fontweight, @(x) ischar(x));
+            addParameter(par, 'color', def_color);
+            % Parse
+            parse(par, value, varargin{:})
+
+            % Set interpreter
+            set(self.ax.YLabel, 'Interpreter', par.Results.interpreter);
+            set(self.ax.YLabel, 'FontSize', par.Results.fontsize);
+            set(self.ax.YLabel, 'FontWeight', par.Results.fontweight);
+            if ischar(par.Results.color)
+                set(self.ax.YLabel, 'Color', self.get_basic_color(par.Results.color));
+            else
+                set(self.ax.YLabel, 'Color', par.Results.color);
+            end
+
+            self.ylabel_ = par.Results.ylabel;
+
+        end
+
+        the_label = self.ylabel_;
+
     end
     
     function trim(self, varargin)
@@ -445,8 +635,8 @@ classdef Fig < handle
         % Set name
         name = string(par.Results.name);
         if isempty(name)
-            if ~isempty(self.title)
-                name = self.title;
+            if ~isempty(self.title_)
+                name = self.title_;
                 if par.Results.date
                     name = name + "_" + string(self.date);
                 end
