@@ -30,7 +30,7 @@
 % This function is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
 
-function sys = gen_oscillating_masses(M, K, F)
+function sys = OscMass_gen_ss(M, K, F)
     
     %% Check arguments
     p = length(M);

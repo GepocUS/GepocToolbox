@@ -44,7 +44,7 @@ function sysOscMass = OscMass_benchmark()
     uOpPoint = zeros(sum(F), 1);
 
     %% Generate continuous-time model
-    sysC = gen_sys_OscMass(M, K, F);
+    sysC = OscMass_gen_ss(M, K, F);
 
     %% Generate ssModel
     Ts = 0.2; % Sampling time
