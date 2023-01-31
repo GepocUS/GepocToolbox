@@ -197,6 +197,17 @@ classdef Fig < handle
         self.date.Format = self.default_date_Format;
         
     end
+
+    % Destructor
+    function delete(self)
+        % FIXME: This does not provide good results. Can I improve the behavior?
+        % We reset gca and gcf when the object is destroyed to 
+        % avoid unintended default Matlab behaviour.
+%         set(gca, 'ColorOrderIndex', 1);
+%         set(gca, 'NextPlot', 'replace');
+        % reset(gca);
+        % reset(gcf);
+    end
     
     %% GETTERS and SETTERS
     
@@ -1036,6 +1047,12 @@ classdef Fig < handle
         % Sets the color order of all the current plots to the colors in ax.ColorOrder
         for i = 1:length(self.ph)
             self.ph{i}.Color = self.ax.ColorOrder(mod(i-1, self.max_num_colors)+1, :);
+        end
+    end
+
+    function reset_plots_color(self)
+        for i = 1:length(self.ph)
+            self.ph{i}.Color = self.ax.ColorOrder(1, :);
         end
     end
 
