@@ -56,6 +56,8 @@ classdef Oracle < handle
         self.n = par.Results.n;
         self.dim = length(self.n);
         self.m = par.Results.m;
+        self.L = par.Results.L;
+        self.mu = par.Results.mu;
         self.f_eval_hand_ = par.Results.f_eval;
         self.g_eval_hand_ = par.Results.g_eval;
 
