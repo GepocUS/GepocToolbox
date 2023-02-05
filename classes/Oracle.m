@@ -94,6 +94,16 @@ classdef Oracle < handle
         end
     end
 
+    function f_hand = get_f_hand(self)
+        % Oracle.f_hand() - Returns function handler for the function evaluation
+        f_hand = @(varargin) self.f_eval_hand_(varargin{:}, self.param);
+    end
+
+    function g_hand = get_g_hand(self)
+        % Oracle.f_hand() - Returns function handler for the gradient evaluation
+        g_hand = @(varargin) self.g_eval_hand_(varargin{:}, self.param);
+    end
+
     %% PUBLIC METHODS
 
     function f_val = f(self, varargin)
