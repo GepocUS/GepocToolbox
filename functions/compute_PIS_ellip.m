@@ -43,8 +43,10 @@
 %                 > SDPT3: https://github.com/SQLP/SDPT3
 %                 > SeDuMi: https://github.com/SQLP/SeDuMi
 %                 Defaults to "SDPT3".
-%       - minimal: Boolean. If true, then the function finds the smallest ellipsoid.
-%                  If false is finds the largest ellipsoid. Default: true.
+%       - type: String. Selects the type of invariant set. The options are:
+%               - 'none' (default): Returns any invariant set.
+%               - 'min': Finds the smallest invariant set.
+%               - 'max': Finds the largest invariant set.
 %       - solver_verbose: Integer that sets the solver's verbose. Defualt: 0.
 %       - verbose: Integer that sets this function's verbose. Default: 0.
 %       - lambda_init: Scalar. Initial value of lambda. Default: 0.02.
@@ -75,7 +77,7 @@
 function [P, K, found, status] = compute_PIS_ellip(sys, cons, param, opt)
     
     %% Default values
-    def_opt.minimal = true;
+    def_opt.type = 'min';
     def_opt.solver = "SDPT3";
     def_opt.solver_verbose = 0;
     def_opt.lambda_init = 0.02;
@@ -95,7 +97,7 @@ function [P, K, found, status] = compute_PIS_ellip(sys, cons, param, opt)
     par = inputParser;
     par.CaseSensitive = false;
     par.FunctionName = 'compute_PIS_ellip';
-
+    
     addRequired(par, 'sys');
     addRequired(par, 'cons');
     addOptional(par, 'param', def_param, @(x) isstruct(x));
@@ -116,16 +118,24 @@ function [P, K, found, status] = compute_PIS_ellip(sys, cons, param, opt)
         cons.dx = Nx*cons.dx;
         cons.du = Nu*cons.du;
     end
+
+    % Check type
+    if isempty(strfind(['min', 'max', 'none'], opt.type))
+        error("opt.type must be 'min', 'max' or 'none'");
+    end
+    if strcmp(opt.type, 'none'); opt.optimize = false; end
     
     %% Solve problem
     done = false;
     found = false;
     lambda = opt.lambda_init;
     k = 0;
-    if opt.minimal
+    if strcmp(opt.type, 'min')
         best_val = -inf;
-    else
+    elseif strcmp(opt.type, 'max')
         best_val = inf;
+    else
+        best_val = NaN;
     end
     best_P = [];
     best_K = [];  
@@ -134,10 +144,12 @@ function [P, K, found, status] = compute_PIS_ellip(sys, cons, param, opt)
     
     if opt.verbose > 0
         fprintf("compute_PIS_ellip: Starting computation of ellipsoid. ");
-        if opt.minimal
+        if strcmp(opt.type, 'min')
             fprintf("Computing minimal set.\n");
-        else
+        elseif strcmp(opt.type, 'max')
             fprintf("Computing maximal set.\n");
+        else
+            fprintf("Computing invariant set (neither minimal nor maximal).\n");
         end
         
         fprintf("\tOptions: ");
@@ -200,7 +212,7 @@ function [P, K, found, status] = compute_PIS_ellip(sys, cons, param, opt)
                 val = trace(P);
                 found = true;
                 
-                if opt.minimal
+                if strcmp(opt.type, 'min')
                     
                    if val >= best_val
                         best_P = P;
@@ -219,7 +231,7 @@ function [P, K, found, status] = compute_PIS_ellip(sys, cons, param, opt)
                         best_lambda = lambda;
                         best_val = val;
                     end
-                   
+
                 end
                     
             end
@@ -276,7 +288,7 @@ function [P, K, e_flag, status] = local_compute_RPIS_ellip(sys, constraint, para
 
     S = sdpvar(n, n); % S = inv(P)
     Y = sdpvar(m, n); % Y = K*inv(P)
-    if opt.minimal; gamma = sdpvar(1, 1); end
+    if strcmp(opt.type, 'min'); gamma = sdpvar(1, 1); end
     
     %% Constraints
     cons = []; % List of constraints
@@ -302,7 +314,7 @@ function [P, K, e_flag, status] = local_compute_RPIS_ellip(sys, constraint, para
 
     % Impose state constraints
     for i = 1:size(Cx, 1)
-        if opt.minimal
+        if strcmp(opt.type, 'min')
 %             cons = [cons, [gamma*(dx(i))^2, Cx(i, :)*S;...
 %                            S'*Cx(i, :)', S] >= 0];
             cons = [cons, Cx(i, :)*S*Cx(i, :)' <= gamma*(dx(i))^2];
@@ -335,10 +347,12 @@ function [P, K, e_flag, status] = local_compute_RPIS_ellip(sys, constraint, para
     
     %% Solve optimization problem and extract values
     
-    if opt.minimal
+    if strcmp(opt.type, 'min')
         status = optimize(cons, gamma, solver_options);
-    else
+    elseif strcmp(opt.type, 'max')
         status = optimize(cons, -trace(S), solver_options);
+    else
+        status = optimize(cons, [], solver_options);
     end
     
     % Extract values
