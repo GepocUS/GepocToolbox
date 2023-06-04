@@ -39,6 +39,7 @@
 %           A value of 2 can increase the computation time of the function significantly.
 %  verbose: Integer that can take value 0, 1, 2 or 3. It indicates how much information is
 %           displayed to the user. No information is displayed if set to 0. Defaults to 1
+%  ISTA: If true, then FISTA is turned into ISTA (acceleration is disabled)
 %
 % This function is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
@@ -58,6 +59,7 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA(g_eval, R, varargin)
     def_t0 = 1; % Default value of t0
     def_initialize_Hist = true; % Default value of initialize_Hist
     def_print_counter_step = 10; % Number of iterations between verbose to user (only if verbose >= 3)
+    def_ISTA = false; % If true, implement ISTA instead of FISTA, i.e., disable acceleration
     
     %% Parser
     par = inputParser;
@@ -79,6 +81,7 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA(g_eval, R, varargin)
     addParameter(par, 't_0', def_t0, @(x) isnumeric(x));
     addParameter(par, 'initialize_Hist', def_initialize_Hist, @(x) islogical(x) || x==1 || x==0);
     addParameter(par, 'print_counter_step', def_print_counter_step, @(x) isnumeric(x) && (x>=0));
+    addParameter(par, 'ISTA', def_ISTA, @(x) islogical(x) || x==1 || x==0);
     % Parse
     parse(par, g_eval, R, varargin{:})
     % Rename
@@ -98,14 +101,6 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA(g_eval, R, varargin)
     % Check arguments
     if isempty(z_0); z_0 = def_z0; end % Default x_0 if an empty array is provided
     if size(z_0, 2)>1; z_0 = z_0'; end % Make x_0 a column vector
-    if min(size(R))~=1 && ~isdiag(R) % Check if R is diagonal
-        warning('RFISTA:InputWarning',...
-                'Matrix R must be a diagonal matrix or a vector. The diagonal elements will be used');
-    end
-    if min(size(R))~=1
-        R = diag(R); % Turn R into a vector if a matrix was given
-    end
-    if all(R < 0); error('FISTA:InputError', 'Matrix R must be strictly positive definite'); end % R > 0
     if k_min >= k_max
         if verbose>=3
             warning('FISTA:InputWarning', 'Value of k_min >= k_max. Algorithm will exit at k_max iterations allways');
@@ -177,6 +172,9 @@ function [z_opt, f_opt, e_flag, Hist] = FISTA(g_eval, R, varargin)
         xk = plus_op(yk1, g_eval, R);
         tk = 0.5*(1 + sqrt(1+4*tk1^2));
         yk = xk + (tk1 - 1)*(xk - xk1)/tk;
+        if par.Results.ISTA
+            yk = xk;
+        end
         
         % Compute variables
         gy = g_dual_norm(yk1, xk, R); % Compute || g(y_{k-1})||_*. It is computed here to take advantage of x_k = y_{k-1}+
@@ -280,30 +278,30 @@ end
 % R must be a vector
 function gy = g_dual_norm_handler(y, plus_op, g, R) % TODO: can't this be simplified
 	y_plus = plus_op(y, g, R);
-    gy = sqrt( ((y - y_plus).*R)'*(y - y_plus) );
+    gy = sqrt( (y - y_plus)'*R*(y - y_plus) );
 end
 
 % Computes ||g(y)||_* for the given y, y+ and metric R
 % R must be a vector
 function gy = g_dual_norm(y, y_plus, R)
-    gy = sqrt( ((y - y_plus).*R)'*(y - y_plus) );
+    gy = sqrt( (y - y_plus)'*R*(y - y_plus) );
 end
 
 % Computes the composite gradient mapping g(y) for the given y, function handlers plus_op and g, and metric R
 % R must be a vector
 function gy = comp_g_handler(y, plus_op, g, R)
-    gy = R.*(y - plus_op(y, g, R));
+    gy = R*(y - plus_op(y, g, R));
 end
 
 % Computes the composite gradient maping g(y) for the given y, y+ and metrix R
 function gy = comp_g(y, y_plus, R)
-    gy = R.*(y - y_plus);
+    gy = R*(y - y_plus);
 end
 
 % Computes the plus operator for phi=0 and no restrictions
 % R must be a vector
 % This function is used as the default function for the plus_op function handler if non is provided by the user
 function y_plus = default_plus_operator(y, g, R)
-    y_plus = y - g(y)./R;
+    y_plus = y - R\g(y);
 end
 
