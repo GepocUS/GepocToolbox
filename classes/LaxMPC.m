@@ -195,6 +195,10 @@ classdef LaxMPC < ssMPC
                 UBy_indx = find(~isinf(model.UBy));
                 LBy = model.LBy(LBy_indx);
                 UBy = model.UBy(UBy_indx);
+                LBx = model.LBx;
+                UBx = model.UBx;
+                LBu = model.LBu;
+                UBu = model.UBu;
             else
                 B = model.B;
                 if isfield(model, 'C')

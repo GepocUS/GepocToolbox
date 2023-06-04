@@ -32,7 +32,7 @@ func =  @(z) 0.5*z'*H*z + q'*z;
 %% Define other ingredients of FISTA
 
 % The only other required argument of FISTA is a metric R, which is a vector whose dimension must be the same as the number of decision variables
-R = sum(abs(H), 2);
+R = diag(sum(abs(H), 2));
 
 % There are other optional arguments. For example
 k_max = 500;  % Maximum number of iterations
