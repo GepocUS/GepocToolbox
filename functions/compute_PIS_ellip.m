@@ -372,12 +372,12 @@ function [P, K, e_flag, status] = local_compute_RPIS_ellip(sys, constraint, para
     end
     
     % Return other status information
-    if opt.minimal
+    if strcmp(opt.type, 'min')
         status.f_opt = value(gamma);
     else
         status.f_opt = -trace(Sk);
     end
-        
+    
     status.primal_feas = primal_feas;
     status.dual_feas = dual_feas;
     status.e_flag = e_flag;
