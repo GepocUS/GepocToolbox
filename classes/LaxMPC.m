@@ -165,10 +165,6 @@ classdef LaxMPC < ssMPC
         
         function [Az, b] = compute_eq(model, N)
             % Obtain variables from function inputs
-            if isobject(model) && ~isa(model, 'ssModel') % This case assumes that the argument Q is in fact an instance of LaxMPC
-                    N = model.N;
-                model = model.model;
-            end
             A = model.A;
             if isa(model, 'ssModel')
                 B = model.Bu;
@@ -190,10 +186,6 @@ classdef LaxMPC < ssMPC
         
         function [C, d, LB, UB, C_x0, d_x0] = compute_ineq(model, N)
             % Obtain variables from function inputs
-            if isobject(model) && ~isa(model, 'ssModel') % This case assumes that the argument Q is in fact an instance of LaxMPC
-                N = model.N;
-                model = model.model;
-            end
             A = model.A;
             if isa(model, 'ssModel')
                 B = model.Bu;
@@ -228,6 +220,20 @@ classdef LaxMPC < ssMPC
                 else
                     UBy_indx = [];
                     UBy = [];
+                end
+                if isfield(model, 'LBx')
+                    LBx = model.LBx;
+                    UBx = model.UBx;
+                else
+                    LBx = -inf*ones(size(A, 1), 1);
+                    UBx = inf*ones(size(A, 1), 1);
+                end
+                if isfield(model, 'LBu')
+                    LBu = model.LBu;
+                    UBu = model.UBu;
+                else
+                    LBu = -inf*ones(size(B, 2), 1);
+                    UBu = inf*ones(size(B, 2), 1);
                 end
             end
             % Dimensions
@@ -300,8 +306,8 @@ classdef LaxMPC < ssMPC
             end
             
             % Compute lower and upper bounds of the decision variables
-            LB = [model.LBu; kron(ones(N-1,1), [model.LBx; model.LBu]); model.LBx]; 
-            UB = [model.UBu; kron(ones(N-1,1), [model.UBx; model.UBu]); model.UBx];
+            LB = [LBu; kron(ones(N-1,1), [LBx; LBu]); LBx]; 
+            UB = [UBu; kron(ones(N-1,1), [UBx; UBu]); UBx];
         end
         
         function [alpha, beta] = sparse_Wc(self)
