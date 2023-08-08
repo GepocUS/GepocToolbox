@@ -745,6 +745,10 @@ classdef Fig < handle
         % Also supports the standard Fig.plot(x, y, 'r:') way of
         % choosing line color and style.
         %
+        % Additionally, plot([...], 'stairs', true) uses Matlab's builtin
+        % stairs() function instead of plot().
+        % BUG: Legend does not work if stairs are used.
+        %
         % See also: plot
 
         % Default values
@@ -753,7 +757,15 @@ classdef Fig < handle
         def_markersize = self.markersize;
         def_linestyle = '-';
         def_marker = 'none';
-        def_color = self.ax.ColorOrder(mod(length(self.ph), self.max_num_colors) + 1, :);
+        try
+            def_color = self.ax.ColorOrder(mod(length(self.ph), self.max_num_colors) + 1, :);
+        catch ME
+            if (strcmp(ME.identifier,'MATLAB:badsubscript'))
+                def_color = self.ax.ColorOrder(1, :);
+            else
+                rethrow(ME)
+            end
+        end
 
         % Parser
         par = inputParser;
@@ -770,6 +782,7 @@ classdef Fig < handle
         addParameter(par, 'linewidth', def_linewidth, @(x) isnumeric(x) && (x>0));
         addParameter(par, 'markersize', def_markersize, @(x) isnumeric(x) && (x>0));
         addParameter(par, 'color', def_color);
+        addParameter(par, 'stairs', false);
         % Parse
         if mod(length(varargin), 2)==0
             parse(par, varargin{1}, varargin{2}, def_mods, varargin{3:end});
@@ -809,11 +822,19 @@ classdef Fig < handle
 
         % Plot
         self.focus();
-        self.ph{end+1} = plot(self.ax, x, y, mods_,...
-                              'Color', color_,...
-                              'linewidth', linewidth_, 'LineStyle', linestyle_,...
-                              'markersize', markersize_, 'Marker', marker_...
-                              );
+        if par.Results.stairs
+            self.ph{end+1} = stairs(self.ax, x, y, mods_,...
+                                  'Color', color_,...
+                                  'linewidth', linewidth_, 'LineStyle', linestyle_,...
+                                  'markersize', markersize_, 'Marker', marker_...
+                                  );
+        else
+            self.ph{end+1} = plot(self.ax, x, y, mods_,...
+                                  'Color', color_,...
+                                  'linewidth', linewidth_, 'LineStyle', linestyle_,...
+                                  'markersize', markersize_, 'Marker', marker_...
+                                  );
+        end
          
         % Post plot
         self.previous_ax_position = self.ax.Position;
