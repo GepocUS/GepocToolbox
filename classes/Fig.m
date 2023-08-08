@@ -787,7 +787,8 @@ classdef Fig < handle
         color_ = par.Results.color;
 
         % Use marker from mods is available
-        idx_mods_marker = regexp(mods_ ,'[.ox+*sdv^<>ph]');
+        % TODO: Do I need to include other corner-cases of .?
+        idx_mods_marker = regexp(mods_ ,'(?<!-)\.|[ox\+\*sdv\^\<\>ph]');
         if ~isempty(idx_mods_marker)
             marker_ = mods_(idx_mods_marker);
             linestyle_ = 'none';
