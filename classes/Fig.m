@@ -56,6 +56,8 @@
 %
 % For additional help on a method call: help Fig.method_name
 %
+% This class is part of the GepocToolbox: https://github.com/GepocUS/GepocToolbox
+%
 % See also: figure, plot, clf
 
 classdef Fig < handle

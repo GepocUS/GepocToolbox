@@ -11,10 +11,10 @@
 %        || H*x ||_inf <= 1
 % 
 % Procedure obtained from Lemma 2 in:
-% 
-% T. Alama, et.al., "Estimation of the domain of 
-% attraction for saturated discrete-time systems" in
-% International Journal of Systems Science, 2006.
+% T. Alama, et.al., "Estimation of the domain of attraction for saturated
+% discrete-time systems", in International Journal of Systems Science, 2006.
+%
+% This function requires a working installation of the MPT3 toolbox.
 %
 % This function is part of GepocToolbox: https://github.com/GepocUS/GepocToolbox
 %

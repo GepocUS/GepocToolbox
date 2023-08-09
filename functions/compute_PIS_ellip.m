@@ -1,4 +1,4 @@
-%% - compute_PIS_ellip - compute ellipsoidal PIS of the given system
+%% compute_PIS_ellip - compute ellipsoidal PIS of the given system
 % 
 % Consider the system x+ = A*x + B*u + E*w, where w is a disturbance
 % that is assumed to be contained in a compact set W.
@@ -18,9 +18,10 @@
 % 
 % For information on the LMI problems and general procedure used here, we
 % refer the user to Section 4 of:
-% 
 % I. Alvarado, et.al. "Tractable robust MPC design based on nominal predictions",
 % in Journal of Process Control, 2022.
+%
+% [P, K, found, status] = compute_PIS_ellip(sys, cons, [param], [opt])
 % 
 % INPUTS:
 % - sys: A structure containing the system's information.
@@ -33,7 +34,7 @@
 %       - V: Matrix containing the vertices of W in each of its rows.
 %            Defaults to []. If [], the ellipsoid does not consider disturbance.
 %       - rho: Scalar that modifies the input constraints imposed on the ellipsoid.
-%              In particular, we force Cu*Kx <= rho*du. Defaults to 1.
+%              In particular, we force Cu*K*x <= rho*du. Defaults to 1.
 %       - mu: Scalar that imposes a certain contraction factor on the ellipsoid.
 %             That is, we impose mu*P <= Ak'*P*Ak, where Ak = A + B*K.
 %             Defaults to 0. If 0, the condition is not imposed.
@@ -47,7 +48,7 @@
 %               - 'none' (default): Returns any invariant set.
 %               - 'min': Finds the smallest invariant set.
 %               - 'max': Finds the largest invariant set.
-%       - solver_verbose: Integer that sets the solver's verbose. Defualt: 0.
+%       - solver_verbose: Integer that sets the solver's verbose. Default: 0.
 %       - verbose: Integer that sets this function's verbose. Default: 0.
 %       - lambda_init: Scalar. Initial value of lambda. Default: 0.02.
 %       - lambda_max: Maximum value of lambda. Default: 1.
@@ -57,11 +58,12 @@
 %                   lambda_init to lambda_max taking steps of size lambda_step
 %                   and returns the best ellipsoid that it finds. If false,
 %                   the function returns the LMI problem's solution for the
-%                   value of lambda_init. Default: true,
+%                   value of lambda_init. Default: true.
 %       - feas_gap: Scalar. Feasibility gap used to allow a certain degree of
-%                   non-feasibility in the solver's solution. Default: 1e-4.
+%                   non-feasibility in the solver's solution. Default: 1e-14.
 %       - normalize: Boolean. If true then the constraints are normalized so 
-%                    that dx and du only contain 1s. Default: true.
+%                    that dx and du only contain 1s. This can help the solver
+%                    by improving the numerical conditioning. Default: true.
 % 
 % OUTPUTS:
 %   - P: Matrix P of the ellipsoid
@@ -70,6 +72,9 @@
 %            the selected conditions.
 %   - status: Structure containing various additional fields. Only of use if
 %             you know a lot about the inner workings of this function.
+%
+% This function requires a working installation of YALMIP (version 20200116
+% onward) able to locate either the SDPT3 or the SeDuMi solver.
 % 
 % This function is part of GepocToolbox: https://github.com/GepocUS/GepocToolbox
 % 
