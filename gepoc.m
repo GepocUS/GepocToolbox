@@ -66,6 +66,7 @@ switch varargin{1}
         addpath([root_path '/functions/']);
         addpath([root_path '/solvers/']);
         addpath([root_path '/benchmarks/']);
+        addpath([root_path '/tests/']);
         warning('off','MATLAB:rmpath:DirNotFound')
         addpath([root_path '/personal/']);
         warning('on','MATLAB:rmpath:DirNotFound')
@@ -85,9 +86,17 @@ switch varargin{1}
         rmpath([root_path '/functions/']);
         rmpath([root_path '/solvers/']);
         rmpath([root_path '/benchmarks/']);
+        rmpath([root_path '/tests/']);
         warning('on','MATLAB:rmpath:DirNotFound')
         savepath
         disp('GepoxToolbox uninstalled');
+        
+    % gepoc('test')
+    %
+    % Performs the toolbox unit tests (see the /tests directory)
+    % 
+    case 'test'
+        varargout{:} = gt_exec_tests(varargin{2:end});
     
     % Command not recognized
     otherwise
